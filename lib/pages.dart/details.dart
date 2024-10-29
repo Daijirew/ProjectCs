@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myproject/widget/widget_support.dart';
 
 class Details extends StatefulWidget {
   const Details({super.key});
@@ -12,7 +13,7 @@ class _DetailsState extends State<Details> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        margin: EdgeInsets.only(top: 50, left: 20, right: 20),
+        margin: const EdgeInsets.only(top: 50, left: 20, right: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -20,7 +21,7 @@ class _DetailsState extends State<Details> {
               onTap: () {
                 Navigator.pop(context);
               },
-              child: Icon(
+              child: const Icon(
                 Icons.arrow_back,
                 color: Colors.black,
               ),
@@ -30,6 +31,14 @@ class _DetailsState extends State<Details> {
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height / 2.5,
               fit: BoxFit.fill,
+            ),
+            Text(
+              'Cat',
+              style: AppWidget.semiboldTextFeildStyle(),
+            ),
+            Text(
+              'Type: Pet',
+              style: AppWidget.semiboldTextFeildStyle(),
             ),
           ],
         ),

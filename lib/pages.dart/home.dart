@@ -15,7 +15,7 @@ class _MyWidgetState extends State<home> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        margin: EdgeInsets.only(top: 50, left: 20, right: 20),
+        margin: const EdgeInsets.only(top: 50, left: 20, right: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -24,40 +24,42 @@ class _MyWidgetState extends State<home> {
               children: [
                 Text('Hello World', style: AppWidget.boldTextFeildStyle()),
                 Container(
-                  padding: EdgeInsets.all(3),
+                  padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
                     color: Colors.black,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.home,
                     color: Colors.white,
                   ),
                 )
               ],
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             Text('Cat', style: AppWidget.HeadlineTextFeildStyle()),
             Text('Pet take care', style: AppWidget.LightTextFeildStyle()),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             showItem(),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
                   GestureDetector(
                     onTap: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) => Details()));
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const Details()));
                     },
                     child: Container(
-                      margin: EdgeInsets.all(5),
+                      margin: const EdgeInsets.all(5),
                       child: Material(
                         elevation: 5,
                         borderRadius: BorderRadius.circular(20),
                         child: Container(
-                          padding: EdgeInsets.all(14),
+                          padding: const EdgeInsets.all(14),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -73,10 +75,10 @@ class _MyWidgetState extends State<home> {
                                   Text('Pet of your customer house',
                                       style:
                                           AppWidget.semiboldTextFeildStyle()),
-                                  SizedBox(height: 10),
+                                  const SizedBox(height: 10),
                                   Text('John Terry House',
                                       style: AppWidget.LightTextFeildStyle()),
-                                  SizedBox(height: 10),
+                                  const SizedBox(height: 10),
                                   Text('Total cat 5',
                                       style:
                                           AppWidget.semiboldTextFeildStyle()),
@@ -88,14 +90,14 @@ class _MyWidgetState extends State<home> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Container(
-                    margin: EdgeInsets.all(5),
+                    margin: const EdgeInsets.all(5),
                     child: Material(
                       elevation: 5,
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
-                        padding: EdgeInsets.all(14),
+                        padding: const EdgeInsets.all(14),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -110,10 +112,10 @@ class _MyWidgetState extends State<home> {
                                 ),
                                 Text('Pet of your customer house',
                                     style: AppWidget.semiboldTextFeildStyle()),
-                                SizedBox(height: 10),
+                                const SizedBox(height: 10),
                                 Text('John Terry House',
                                     style: AppWidget.LightTextFeildStyle()),
-                                SizedBox(height: 10),
+                                const SizedBox(height: 10),
                                 Text('Total cat 5',
                                     style: AppWidget.semiboldTextFeildStyle()),
                               ],
@@ -148,7 +150,7 @@ class _MyWidgetState extends State<home> {
             elevation: 5,
             borderRadius: BorderRadius.circular(10),
             child: Container(
-              padding: EdgeInsets.all(10),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                   color: cat ? Colors.black : Colors.white,
                   borderRadius: BorderRadius.circular(10)),
@@ -174,7 +176,7 @@ class _MyWidgetState extends State<home> {
             elevation: 5,
             borderRadius: BorderRadius.circular(10),
             child: Container(
-              padding: EdgeInsets.all(10),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                   color: paw ? Colors.black : Colors.white,
                   borderRadius: BorderRadius.circular(10)),
@@ -200,7 +202,7 @@ class _MyWidgetState extends State<home> {
             elevation: 5,
             borderRadius: BorderRadius.circular(10),
             child: Container(
-              padding: EdgeInsets.all(10),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                   color: backpack ? Colors.black : Colors.white,
                   borderRadius: BorderRadius.circular(10)),
@@ -226,7 +228,7 @@ class _MyWidgetState extends State<home> {
             elevation: 5,
             borderRadius: BorderRadius.circular(10),
             child: Container(
-              padding: EdgeInsets.all(10),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                   color: ball ? Colors.black : Colors.white,
                   borderRadius: BorderRadius.circular(10)),

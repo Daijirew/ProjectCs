@@ -23,10 +23,10 @@ class _MyWidgetState extends State<BottomNav> {
 
   @override
   void initState() {
-    homePage = home();
-    chat = Chat();
-    profile = Profile();
-    payment = Payment();
+    homePage = const home();
+    chat = const Chat();
+    profile = const Profile();
+    payment = const Payment();
     pages = [homePage, chat, payment, profile];
     super.initState();
   }
@@ -38,13 +38,13 @@ class _MyWidgetState extends State<BottomNav> {
         height: 65,
         backgroundColor: Colors.white,
         color: Colors.black,
-        animationDuration: Duration(milliseconds: 500),
+        animationDuration: const Duration(milliseconds: 500),
         onTap: (int index) {
           setState(() {
             currentTapIndex = index;
           });
         },
-        items: [
+        items: const [
           Icon(
             Icons.home_outlined,
             color: Colors.white,
