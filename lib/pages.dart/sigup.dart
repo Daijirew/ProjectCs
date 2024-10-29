@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:myproject/pages.dart/sigup.dart';
+import 'package:myproject/pages.dart/login.dart';
 import 'package:myproject/widget/widget_support.dart';
 
-class LogIn extends StatefulWidget {
-  const LogIn({super.key});
+class Sigup extends StatefulWidget {
+  const Sigup({super.key});
 
   @override
-  State<LogIn> createState() => _LoginState();
+  State<Sigup> createState() => _SigupState();
 }
 
-class _LoginState extends State<LogIn> {
+class _SigupState extends State<Sigup> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,7 +60,7 @@ class _LoginState extends State<LogIn> {
                   child: Container(
                     padding: EdgeInsets.only(left: 20, right: 20),
                     width: MediaQuery.of(context).size.width / 1.2,
-                    height: MediaQuery.of(context).size.height / 2.5,
+                    height: MediaQuery.of(context).size.height / 1.75,
                     decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(15)),
@@ -71,8 +70,17 @@ class _LoginState extends State<LogIn> {
                           height: 20,
                         ),
                         Text(
-                          'Login here',
+                          'Sign Up',
                           style: AppWidget.HeadlineTextFeildStyle(),
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        TextField(
+                          decoration: InputDecoration(
+                              hintText: 'Name',
+                              hintStyle: AppWidget.LightTextFeildStyle(),
+                              prefixIcon: Icon(Icons.person_outline)),
                         ),
                         SizedBox(
                           height: 20,
@@ -94,14 +102,6 @@ class _LoginState extends State<LogIn> {
                               prefixIcon: Icon(Icons.password_outlined)),
                         ),
                         SizedBox(
-                          height: 30,
-                        ),
-                        Container(
-                          alignment: Alignment.topRight,
-                          child: Text('Forgot Password?',
-                              style: AppWidget.LightTextFeildStyle()),
-                        ),
-                        SizedBox(
                           height: 40,
                         ),
                         Material(
@@ -116,7 +116,7 @@ class _LoginState extends State<LogIn> {
                             ),
                             child: Center(
                               child: Text(
-                                'LOGIN',
+                                'SING UP',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
@@ -137,9 +137,9 @@ class _LoginState extends State<LogIn> {
                 GestureDetector(
                   onTap: () {
                     Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => Sigup()));
+                        MaterialPageRoute(builder: (context) => LogIn()));
                   },
-                  child: Text("Don't have an account? Sign Up",
+                  child: Text("Already have an account? Login",
                       style: AppWidget.LightTextFeildStyle()),
                 )
               ],
