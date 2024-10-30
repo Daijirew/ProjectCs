@@ -22,7 +22,7 @@ class _MyWidgetState extends State<home> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Hello World', style: AppWidget.boldTextFeildStyle()),
+                Text('Cat Sitter', style: AppWidget.boldTextFeildStyle()),
                 Container(
                   padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
