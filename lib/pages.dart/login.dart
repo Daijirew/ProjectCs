@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:myproject/pages.dart/sigup.dart';
@@ -11,6 +12,32 @@ class LogIn extends StatefulWidget {
 }
 
 class _LoginState extends State<LogIn> {
+  String email = '', password = '';
+  final _formKey = GlobalKey<FormState>();
+  TextEditingController useremailController = TextEditingController();
+  TextEditingController userpasswordController = TextEditingController();
+
+  userLogin() async {
+    try {
+      await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+          'No user found for that email.',
+          style: TextStyle(fontSize: 18, color: Colors.black),
+        )));
+      } else if (e.code == 'wrong-password') {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+          'Wrong password provided for that user.',
+          style: TextStyle(fontSize: 18, color: Colors.black),
+        )));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,69 +92,97 @@ class _LoginState extends State<LogIn> {
                     decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(15)),
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height: 20,
-                        ),
-                        Text(
-                          'Login here',
-                          style: AppWidget.HeadlineTextFeildStyle(),
-                        ),
-                        SizedBox(
-                          height: 20,
-                        ),
-                        TextField(
-                          decoration: InputDecoration(
-                              hintText: 'Email',
-                              hintStyle: AppWidget.LightTextFeildStyle(),
-                              prefixIcon: Icon(Icons.email_outlined)),
-                        ),
-                        SizedBox(
-                          height: 20,
-                        ),
-                        TextField(
-                          obscureText: true,
-                          decoration: InputDecoration(
-                              hintText: 'Password',
-                              hintStyle: AppWidget.LightTextFeildStyle(),
-                              prefixIcon: Icon(Icons.password_outlined)),
-                        ),
-                        SizedBox(
-                          height: 30,
-                        ),
-                        Container(
-                          alignment: Alignment.topRight,
-                          child: Text('Forgot Password?',
-                              style: AppWidget.LightTextFeildStyle()),
-                        ),
-                        SizedBox(
-                          height: 40,
-                        ),
-                        Material(
-                          elevation: 5,
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(vertical: 8),
-                            width: 200,
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(255, 253, 107, 63),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            height: 20,
+                          ),
+                          Text(
+                            'Login here',
+                            style: AppWidget.HeadlineTextFeildStyle(),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          TextFormField(
+                            controller: useremailController,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter Email';
+                              }
+                              return null;
+                            },
+                            decoration: InputDecoration(
+                                hintText: 'Email',
+                                hintStyle: AppWidget.LightTextFeildStyle(),
+                                prefixIcon: Icon(Icons.email_outlined)),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          TextFormField(
+                            controller: userpasswordController,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter Password';
+                              }
+                              return null;
+                            },
+                            obscureText: true,
+                            decoration: InputDecoration(
+                                hintText: 'Password',
+                                hintStyle: AppWidget.LightTextFeildStyle(),
+                                prefixIcon: Icon(Icons.password_outlined)),
+                          ),
+                          SizedBox(
+                            height: 30,
+                          ),
+                          Container(
+                            alignment: Alignment.topRight,
+                            child: Text('Forgot Password?',
+                                style: AppWidget.LightTextFeildStyle()),
+                          ),
+                          SizedBox(
+                            height: 40,
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              if (_formKey.currentState!.validate()) {
+                                setState(() {
+                                  email = useremailController.text;
+                                  password = userpasswordController.text;
+                                });
+                                userLogin();
+                              }
+                            },
+                            child: Material(
+                              elevation: 5,
                               borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Center(
-                              child: Text(
-                                'LOGIN',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontFamily: 'Poppins1',
-                                  fontWeight: FontWeight.bold,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(vertical: 8),
+                                width: 200,
+                                decoration: BoxDecoration(
+                                  color: Color.fromARGB(255, 253, 107, 63),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'LOGIN',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontFamily: 'Poppins1',
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
