@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:myproject/pages.dart/buttomnav.dart';
 import 'package:myproject/pages.dart/forgotpassword.dart';
 import 'package:myproject/pages.dart/sigup.dart';
 import 'package:myproject/widget/widget_support.dart';
@@ -22,6 +23,8 @@ class _LoginState extends State<LogIn> {
     try {
       await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => BottomNav()));
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
