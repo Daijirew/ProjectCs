@@ -1,9 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:myproject/pages.dart/buttomnav.dart';
 import 'package:myproject/pages.dart/forgotpassword.dart';
 import 'package:myproject/pages.dart/sigup.dart';
+import 'package:myproject/services/database.dart';
+import 'package:myproject/services/shared_pref.dart';
 import 'package:myproject/widget/widget_support.dart';
 
 class LogIn extends StatefulWidget {
@@ -14,15 +17,26 @@ class LogIn extends StatefulWidget {
 }
 
 class _LoginState extends State<LogIn> {
-  String email = '', password = '';
-  final _formKey = GlobalKey<FormState>();
+  String email = '', password = '', name = '', pic = '', username = '', id = '';
   TextEditingController useremailController = TextEditingController();
   TextEditingController userpasswordController = TextEditingController();
 
+  final _formKey = GlobalKey<FormState>();
   userLogin() async {
     try {
       await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
+      QuerySnapshot querySnapshot =
+          await DatabaseMethods().getUserbyemail(email);
+      name = '${querySnapshot.docs[0]['name']}';
+      username = '${querySnapshot.docs[0]['username']}';
+      pic = '${querySnapshot.docs[0]['photo']}';
+      id = '${querySnapshot.docs[0]['id']}';
+      await SharedPreferenceHelper().saveUserDisplayName(name);
+      await SharedPreferenceHelper().saveUserName(username);
+      await SharedPreferenceHelper().saveUserId(id);
+      await SharedPreferenceHelper().saveUserPic(pic);
+
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => BottomNav()));
     } on FirebaseAuthException catch (e) {

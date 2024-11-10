@@ -40,6 +40,9 @@ dependencies:
   cloud_firestore: 
   firebase_auth: 
   google_sign_in: 
+  random_string: 
+  shared_preferences: 
+  intl: 
 
 dev_dependencies:
   flutter_test:

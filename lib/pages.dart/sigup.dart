@@ -4,7 +4,11 @@ import 'package:flutter/widgets.dart';
 import 'package:myproject/pages.dart/buttomnav.dart';
 import 'package:myproject/pages.dart/login.dart';
 import 'package:myproject/services/auth.dart';
+import 'package:myproject/services/database.dart';
+import 'package:myproject/services/shared_pref.dart';
 import 'package:myproject/widget/widget_support.dart';
+import 'package:random_string/random_string.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Sigup extends StatefulWidget {
   const Sigup({super.key});
@@ -26,6 +30,28 @@ class _SigupState extends State<Sigup> {
       try {
         UserCredential userCredential = await FirebaseAuth.instance
             .createUserWithEmailAndPassword(email: email, password: password);
+        String id = randomAlphaNumeric(10);
+        String user = emailController.text.replaceAll('@gmail.com', '');
+        String updateusername =
+            user.replaceFirst(user[0], user[0].toUpperCase());
+        String firstLetter = user.substring(0, 1).toUpperCase();
+        Map<String, String> userInfoMap = {
+          'name': nameController.text,
+          'email': emailController.text,
+          'username': updateusername.toUpperCase(),
+          'SearchKey': firstLetter,
+          'photo':
+              'https://w7.pngwing.com/pngs/81/570/png-transparent-profile-logo-computer-icons-user-user-blue-heroes-logo-thumbnail.png',
+          'id': id,
+        };
+        await DatabaseMethods().addUserDetails(userInfoMap, id);
+        await SharedPreferenceHelper().saveUserId(id);
+        await SharedPreferenceHelper().saveUserDisplayName(nameController.text);
+        await SharedPreferenceHelper().saveUserEmail(emailController.text);
+        await SharedPreferenceHelper().saveUserPic(
+            'https://w7.pngwing.com/pngs/81/570/png-transparent-profile-logo-computer-icons-user-user-blue-heroes-logo-thumbnail.png');
+        await SharedPreferenceHelper().saveUserName(
+            emailController.text.replaceAll('@gmail.com', '').toUpperCase());
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             backgroundColor: Colors.green,
             content: Text(
