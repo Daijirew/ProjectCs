@@ -19,9 +19,9 @@ class _MyWidgetState extends State<Chat> {
 
   getthesharedpref() async {
     myName = await SharedPreferenceHelper().getDisplayName();
-    myProfilePic = await SharedPreferenceHelper().getPicId();
+    myProfilePic = await SharedPreferenceHelper().getUserPic();
     myUserName = await SharedPreferenceHelper().getUserName();
-    myEmail = await SharedPreferenceHelper().getEmailId();
+    myEmail = await SharedPreferenceHelper().getUserEmail();
     setState(() {});
   }
 

@@ -24,9 +24,9 @@ class _ChatpageState extends State<ChatPage> {
 
   getthesharedpref() async {
     myUserName = await SharedPreferenceHelper().getUserName();
-    myProfilePic = await SharedPreferenceHelper().getPicId();
+    myProfilePic = await SharedPreferenceHelper().getUserPic();
     myName = await SharedPreferenceHelper().getDisplayName();
-    myEmail = await SharedPreferenceHelper().getEmailId();
+    myEmail = await SharedPreferenceHelper().getUserEmail();
 
     chatRoomId = getChatRoomIdbyUsername(widget.username, myUserName!);
     setState(() {});
