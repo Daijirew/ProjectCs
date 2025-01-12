@@ -9,14 +9,14 @@ import 'package:myproject/services/database.dart';
 import 'package:myproject/services/shared_pref.dart';
 import 'package:myproject/widget/widget_support.dart';
 
-class LogIn extends StatefulWidget {
-  const LogIn({super.key});
+class LogInSitter extends StatefulWidget {
+  const LogInSitter({super.key});
 
   @override
-  State<LogIn> createState() => _LoginState();
+  State<LogInSitter> createState() => _LoginState();
 }
 
-class _LoginState extends State<LogIn> {
+class _LoginState extends State<LogInSitter> {
   String email = '',
       password = '',
       name = '',

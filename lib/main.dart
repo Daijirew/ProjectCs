@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:myproject/pages.dart/buttomnav.dart';
+import 'package:myproject/Catpage.dart/CatDetailsPage.dart';
+import 'package:myproject/Catpage.dart/CatRegistrationPage.dart';
+import 'package:myproject/page2.dart/homesitter.dart';
+import 'package:myproject/page2.dart/nevbarr..dart';
 import 'package:myproject/pages.dart/chat.dart';
 import 'package:myproject/pages.dart/chatpage.dart';
 import 'package:myproject/pages.dart/home.dart';
@@ -23,20 +26,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Flutter Demo',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-        ),
-        home: FutureBuilder(
-            future: AuthMethods().getCurrentUser(),
-            builder: (context, AsyncSnapshot<dynamic> snapshot) {
-              if (snapshot.hasData) {
-                return Sigup();
-              } else {
-                return Sigup();
-              }
-            }));
+      debugShowCheckedModeBanner: false,
+      home: LogIn(),
+    );
   }
 }

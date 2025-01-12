@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:myproject/Catpage.dart/cat_history.dart';
 import 'package:myproject/pages.dart/details.dart';
+import 'package:myproject/pages.dart/reviwe.dart';
 import 'package:myproject/widget/widget_support.dart';
 
-class home extends StatefulWidget {
-  const home({super.key});
+class Home extends StatefulWidget {
+  const Home({super.key});
 
   @override
-  State<home> createState() => _MyWidgetState();
+  State<Home> createState() => _MyWidgetState();
 }
 
-class _MyWidgetState extends State<home> {
+class _MyWidgetState extends State<Home> {
   bool cat = false, paw = false, backpack = false, ball = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,11 +143,12 @@ class _MyWidgetState extends State<home> {
       children: [
         GestureDetector(
           onTap: () {
-            cat = true;
-            paw = false;
-            backpack = false;
-            ball = false;
-            setState(() {});
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CatHistoryPage(),
+              ),
+            );
           },
           child: Material(
             elevation: 5,
@@ -152,8 +156,9 @@ class _MyWidgetState extends State<home> {
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                  color: cat ? Colors.black : Colors.white,
-                  borderRadius: BorderRadius.circular(10)),
+                color: cat ? Colors.black : Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Image.asset(
                 'images/cat.png',
                 height: 50,
@@ -166,11 +171,13 @@ class _MyWidgetState extends State<home> {
         ),
         GestureDetector(
           onTap: () {
-            cat = false;
-            paw = true;
-            backpack = false;
-            ball = false;
-            setState(() {});
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    const ReviewsPage(itemId: 'some_item_id'), // แก้ไขโดยการส่ง itemId
+              ),
+            );
           },
           child: Material(
             elevation: 5,

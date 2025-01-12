@@ -80,7 +80,7 @@ class _OnboardState extends State<Onboard> {
             onTap: () {
               if (currentIndex == contents.length - 1) {
                 Navigator.pushReplacement(
-                    context, MaterialPageRoute(builder: (context) => Sigup()));
+                    context, MaterialPageRoute(builder: (context) => SignUp()));
               }
               _controller.nextPage(
                   duration: Duration(), curve: Curves.bounceIn);

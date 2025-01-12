@@ -2,6 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:myproject/services/shared_pref.dart';
 
 class DatabaseMethods {
+  Future<void> addUserInfo(Map<String, dynamic> userInfoMap) async {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(userInfoMap['uid'])
+        .set(userInfoMap);
+  }
+
   Future addUser(String userId, Map<String, dynamic> userInfoMap) async {
     return await FirebaseFirestore.instance
         .collection("users")
