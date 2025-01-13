@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:myproject/Catpage.dart/cat_history.dart';
 import 'package:myproject/pages.dart/details.dart';
+import 'package:myproject/pages.dart/matching/matching.dart';
+import 'package:myproject/pages.dart/matching/matchpage.dart';
 import 'package:myproject/widget/widget_support.dart';
+
+import 'matching/datematch.dart';
 
 class home extends StatefulWidget {
   const home({super.key});
@@ -11,6 +16,7 @@ class home extends StatefulWidget {
 
 class _MyWidgetState extends State<home> {
   bool cat = false, paw = false, backpack = false, ball = false;
+  List<DateTime> _selectedDates = [];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,11 +146,12 @@ class _MyWidgetState extends State<home> {
       children: [
         GestureDetector(
           onTap: () {
-            cat = true;
-            paw = false;
-            backpack = false;
-            ball = false;
-            setState(() {});
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CatHistoryPage(),
+              ),
+            );
           },
           child: Material(
             elevation: 5,
@@ -152,8 +159,9 @@ class _MyWidgetState extends State<home> {
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                  color: cat ? Colors.black : Colors.white,
-                  borderRadius: BorderRadius.circular(10)),
+                color: cat ? Colors.black : Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Image.asset(
                 'images/cat.png',
                 height: 50,
@@ -192,11 +200,13 @@ class _MyWidgetState extends State<home> {
         ),
         GestureDetector(
           onTap: () {
-            cat = false;
-            paw = false;
-            backpack = true;
-            ball = false;
-            setState(() {});
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    SelectTargetDateScreen(onDateSelected: (selectedDate) {}),
+              ),
+            );
           },
           child: Material(
             elevation: 5,
@@ -218,11 +228,12 @@ class _MyWidgetState extends State<home> {
         ),
         GestureDetector(
           onTap: () {
-            cat = false;
-            paw = false;
-            backpack = false;
-            ball = true;
-            setState(() {});
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BookingPage(),
+              ),
+            );
           },
           child: Material(
             elevation: 5,

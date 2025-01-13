@@ -6,20 +6,22 @@ class SharedPreferenceHelper {
   static String userEmailKey = 'USEREMAILKEY';
   static String userPicKey = 'USERPICKEY';
   static String displaynameKey = 'USERDISPLAYNAME';
+  static String roleKey = 'USERROLEKEY'; // Added missing role key
 
-  Future<bool> saveUserId(String getUserId) async {
+  // Save user data to SharedPreferences
+  Future<bool> saveUserId(String getuserId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.setString(userIdKey, getUserId);
+    return prefs.setString(userIdKey, getuserId);
+  }
+
+  Future<bool> saveUserName(String getuserName) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.setString(userNameKey, getuserName);
   }
 
   Future<bool> saveUserEmail(String getUserEmail) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.setString(userEmailKey, getUserEmail);
-  }
-
-  Future<bool> saveUserName(String getUserName) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.setString(userNameKey, getUserName);
   }
 
   Future<bool> saveUserPic(String getUserPic) async {
@@ -32,6 +34,12 @@ class SharedPreferenceHelper {
     return prefs.setString(displaynameKey, getUserDisplayName);
   }
 
+  Future<bool> saveUserRole(String getUserRole) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.setString(roleKey, getUserRole);
+  }
+
+  // Getter methods to retrieve user data
   Future<String?> getUserId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString(userIdKey);
@@ -55,5 +63,21 @@ class SharedPreferenceHelper {
   Future<String?> getDisplayName() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString(displaynameKey);
+  }
+
+  Future<String?> getUserRole() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString(roleKey);
+  }
+
+  // Additional utility methods to check if data exists
+  Future<bool> isUserLoggedIn() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.containsKey(userIdKey);
+  }
+
+  Future<bool> clearUserData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return await prefs.clear(); // Clear all data
   }
 }
