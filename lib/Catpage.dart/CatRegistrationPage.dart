@@ -23,18 +23,53 @@ class _CatRegistrationPageState extends State<CatRegistrationPage> {
 
   // บันทึกข้อมูลแมว
   Future<void> saveCat() async {
-    if (birthDate == null) {
-      print("Birthdate is not selected");
+    // ตรวจสอบว่าใส่ทุกช่อง
+    if (nameController.text.isEmpty ||
+        breedController.text.isEmpty ||
+        descriptionController.text.isEmpty ||
+        vaccinationController.text.isEmpty ||
+        birthDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select a birthdate for the cat")),
+        const SnackBar(content: Text("กรุณากรอกข้อมูลให้ครบทุกช่อง")),
       );
       return;
     }
 
-    if (nameController.text.isEmpty) {
-      print("Cat name is empty");
+    // ตรวจสอบว่าข้อมูลเป็นตัวอักษรภาษาไทยหรืออังกฤษเท่านั้น
+    final validPattern = RegExp(
+        r'^[a-zA-Zก-๙\s]+$'); // อนุญาตตัวอักษรภาษาไทย, a-z, A-Z และช่องว่าง
+    final descriptionPattern = RegExp(
+        r'^[a-zA-Zก-๙0-9\s]+$'); // อนุญาตตัวอักษรภาษาไทย, a-z, A-Z, ตัวเลข และช่องว่าง
+
+    if (!validPattern.hasMatch(nameController.text)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Cat name is required")),
+        const SnackBar(
+            content:
+                Text("ชื่อแมวต้องเป็นตัวอักษรภาษาไทยหรือภาษาอังกฤษเท่านั้น")),
+      );
+      return;
+    }
+    if (!validPattern.hasMatch(breedController.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content:
+                Text("สายพันธุ์ต้องเป็นตัวอักษรภาษาไทยหรือภาษาอังกฤษเท่านั้น")),
+      );
+      return;
+    }
+    if (!descriptionPattern.hasMatch(descriptionController.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                "คำอธิบายต้องเป็นตัวอักษรภาษาไทย ภาษาอังกฤษ หรือมีตัวเลขเท่านั้น")),
+      );
+      return;
+    }
+    if (!validPattern.hasMatch(vaccinationController.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                "สถานะการฉีดวัคซีนต้องเป็นตัวอักษรภาษาไทยหรือภาษาอังกฤษเท่านั้น")),
       );
       return;
     }
@@ -44,34 +79,75 @@ class _CatRegistrationPageState extends State<CatRegistrationPage> {
     });
 
     try {
-      // ตรวจสอบผู้ใช้ที่ล็อกอิน
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        print("No user is logged in!");
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please log in to register a cat")),
+          const SnackBar(content: Text("กรุณาเข้าสู่ระบบเพื่อลงทะเบียนแมว")),
         );
         return;
       }
-      print("User ID: ${user.uid}");
 
-      // สร้างข้อมูลแมว
       Cat newCat = Cat(
         name: nameController.text,
         breed: breedController.text,
-        imagePath: "", // ไม่จำเป็นต้องใช้รูปภาพ
+        imagePath: "",
         birthDate: Timestamp.fromDate(birthDate!),
       );
 
-      // บันทึกข้อมูลแมวใน Firestore
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('cats')
           .add(newCat.toMap());
-      print("Cat data successfully written!");
 
-      // แสดงข้อความสำเร็จ
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("สำเร็จ"),
+          content: const Text("ลงทะเบียนแมวเรียบร้อยแล้ว!"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // ปิดหน้าต่าง dialog
+                Navigator.pop(context); // ย้อนกลับหลังจากบันทึก
+              },
+              child: const Text("ตกลง"),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("เกิดข้อผิดพลาดในการบันทึก: $e")),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please log in to register a cat")),
+        );
+        return;
+      }
+
+      Cat newCat = Cat(
+        name: nameController.text,
+        breed: breedController.text,
+        imagePath: "",
+        birthDate: Timestamp.fromDate(birthDate!),
+      );
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('cats')
+          .add(newCat.toMap());
+
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -89,7 +165,6 @@ class _CatRegistrationPageState extends State<CatRegistrationPage> {
         ),
       );
     } catch (e) {
-      print("Error saving cat: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error saving cat: $e")),
       );

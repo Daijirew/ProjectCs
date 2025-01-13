@@ -17,14 +17,14 @@ class _MyWidgetState extends State<Nevbarr> {
   late List<Widget> pages;
   late Widget currentPage;
   late Home2 homePage;
-  late Chat2 chat;
+  late Chat chat;
   late ProfileSitter profile;
   late Payment2 payment;
 
   @override
   void initState() {
     homePage = Home2();
-    chat = const Chat2();
+    chat = const Chat();
     profile = const ProfileSitter();
     payment = const Payment2();
     pages = [homePage, chat, payment, profile];

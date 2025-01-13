@@ -13,55 +13,78 @@ class CatDetailsPage extends StatelessWidget {
         title: Text('${cat.name} Details'),
         backgroundColor: Colors.orange,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            if (cat.imagePath.isNotEmpty)
-              CircleAvatar(
-                radius: 60,
-                backgroundImage:
-                    NetworkImage(cat.imagePath), // ใช้ NetworkImage
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center, // จัดให้อยู่กลาง
+            crossAxisAlignment:
+                CrossAxisAlignment.center, // จัดให้ตรงกลางแนวขวาง
+            children: [
+              // แสดงภาพแมวถ้ามี
+              if (cat.imagePath.isNotEmpty)
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.orange, width: 3),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.network(
+                      cat.imagePath,
+                      height: 250,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                )
+              else
+                const CircleAvatar(
+                  radius: 80,
+                  backgroundColor: Colors.grey,
+                  child: Icon(
+                    Icons.pets,
+                    size: 50,
+                    color: Colors.white,
+                  ),
+                ),
+              const SizedBox(height: 20),
+
+              // ข้อมูลของแมว
+              Card(
+                elevation: 5,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Name: ${cat.name}',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Breed: ${cat.breed}',
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Birthdate: ${cat.birthDate?.toDate().toString().split(' ')[0] ?? 'Unknown'}',
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            const SizedBox(height: 16),
-            Text(
-              cat.name,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Breed: ${cat.breed}',
-              style: const TextStyle(fontSize: 18),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Additional Info:',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'This section can be used for more details about the cat.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const Spacer(),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              icon: const Icon(Icons.arrow_back),
-              label: const Text('Back'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              ),
-            ),
-          ],
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );
