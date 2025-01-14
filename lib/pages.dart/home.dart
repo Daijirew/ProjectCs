@@ -174,8 +174,8 @@ class _MyWidgetState extends State<Home> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) =>
-                    const ReviewsPage(itemId: 'some_item_id'), // แก้ไขโดยการส่ง itemId
+                builder: (context) => const ReviewsPage(
+                    itemId: 'some_item_id'), // แก้ไขโดยการส่ง itemId
               ),
             );
           },

@@ -1,12 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:random_string/random_string.dart';
-import 'cat.dart'; // Import the Cat class
+import 'package:myproject/Catpage.dart/vaccine_selection_page.dart';
+import 'cat.dart';
 
 class CatRegistrationPage extends StatefulWidget {
   const CatRegistrationPage({Key? key, this.cat}) : super(key: key);
-
   final Cat? cat;
 
   @override
@@ -17,59 +16,287 @@ class _CatRegistrationPageState extends State<CatRegistrationPage> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController breedController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
-  final TextEditingController vaccinationController = TextEditingController();
   DateTime? birthDate;
   bool isLoading = false;
 
-  // บันทึกข้อมูลแมว
+  Map<String, Map<String, bool>> vaccinationGroups = {
+    'Core Vaccines': {
+      'FPV (Feline Panleukopenia)': false,
+      'FHV (Feline Viral Rhinotracheitis)': false,
+      'FCV (Feline Calicivirus)': false,
+    },
+    'Non-Core Vaccines': {
+      'FeLV (Feline Leukemia Virus)': false,
+      'Rabies': false,
+    },
+  };
+
+  String getSelectedVaccinations() {
+    List<String> selected = [];
+    vaccinationGroups.forEach((group, vaccines) {
+      vaccines.forEach((vaccine, isSelected) {
+        if (isSelected) selected.add(vaccine);
+      });
+    });
+    return selected.join(', ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Register Cat',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.orange,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.orange.shade200, Colors.white],
+          ),
+        ),
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildTextField(
+                                controller: nameController,
+                                label: 'Cat Name',
+                                icon: Icons.pets,
+                                hint: 'Enter cat name'),
+                            const SizedBox(height: 20),
+                            _buildTextField(
+                                controller: breedController,
+                                label: 'Cat Breed',
+                                icon: Icons.category,
+                                hint: 'Enter cat breed'),
+                            const SizedBox(height: 20),
+                            _buildTextField(
+                                controller: descriptionController,
+                                label: 'Description',
+                                icon: Icons.description,
+                                hint: 'Enter description',
+                                maxLines: 3),
+                            const SizedBox(height: 20),
+                            _buildDatePicker(),
+                            const SizedBox(height: 20),
+                            _buildVaccinationSection(),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      ElevatedButton(
+                        onPressed: saveCat,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 50, vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          elevation: 5,
+                        ),
+                        child: const Text(
+                          'Register Cat',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    required String hint,
+    int maxLines = 1,
+  }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Icon(icon, color: Colors.orange),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(color: Colors.orange),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide(color: Colors.orange.shade400, width: 2),
+        ),
+        filled: true,
+        fillColor: Colors.white,
+      ),
+    );
+  }
+
+  Widget _buildDatePicker() {
+    return GestureDetector(
+      onTap: () => pickDate(context),
+      child: Container(
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade400),
+          borderRadius: BorderRadius.circular(15),
+          color: Colors.white,
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_today, color: Colors.orange),
+            const SizedBox(width: 10),
+            Text(
+              birthDate == null
+                  ? 'Select Birthdate'
+                  : 'Birthdate: ${birthDate!.toLocal().toString().split(' ')[0]}',
+              style: TextStyle(
+                color: birthDate == null ? Colors.grey : Colors.black,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVaccinationSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.medical_services, color: Colors.orange),
+            const SizedBox(width: 10),
+            const Text(
+              'Select Vaccinations',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        InkWell(
+          onTap: () async {
+            final result = await Navigator.push<Map<String, Map<String, bool>>>(
+              context,
+              MaterialPageRoute(
+                builder: (context) => VaccineSelectionPage(
+                  initialSelections: vaccinationGroups,
+                ),
+              ),
+            );
+            if (result != null) {
+              setState(() {
+                vaccinationGroups = result;
+              });
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    getSelectedVaccinations().isEmpty
+                        ? 'Select vaccinations'
+                        : getSelectedVaccinations(),
+                    style: TextStyle(
+                      color: getSelectedVaccinations().isEmpty
+                          ? Colors.grey.shade600
+                          : Colors.black,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.grey.shade600,
+                  size: 16,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> pickDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.orange.shade400,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != birthDate) {
+      setState(() {
+        birthDate = picked;
+      });
+    }
+  }
+
   Future<void> saveCat() async {
-    // ตรวจสอบว่าใส่ทุกช่อง
     if (nameController.text.isEmpty ||
         breedController.text.isEmpty ||
         descriptionController.text.isEmpty ||
-        vaccinationController.text.isEmpty ||
         birthDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("กรุณากรอกข้อมูลให้ครบทุกช่อง")),
-      );
-      return;
-    }
-
-    // ตรวจสอบว่าข้อมูลเป็นตัวอักษรภาษาไทยหรืออังกฤษเท่านั้น
-    final validPattern = RegExp(
-        r'^[a-zA-Zก-๙\s]+$'); // อนุญาตตัวอักษรภาษาไทย, a-z, A-Z และช่องว่าง
-    final descriptionPattern = RegExp(
-        r'^[a-zA-Zก-๙0-9\s]+$'); // อนุญาตตัวอักษรภาษาไทย, a-z, A-Z, ตัวเลข และช่องว่าง
-
-    if (!validPattern.hasMatch(nameController.text)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content:
-                Text("ชื่อแมวต้องเป็นตัวอักษรภาษาไทยหรือภาษาอังกฤษเท่านั้น")),
-      );
-      return;
-    }
-    if (!validPattern.hasMatch(breedController.text)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content:
-                Text("สายพันธุ์ต้องเป็นตัวอักษรภาษาไทยหรือภาษาอังกฤษเท่านั้น")),
-      );
-      return;
-    }
-    if (!descriptionPattern.hasMatch(descriptionController.text)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text(
-                "คำอธิบายต้องเป็นตัวอักษรภาษาไทย ภาษาอังกฤษ หรือมีตัวเลขเท่านั้น")),
-      );
-      return;
-    }
-    if (!validPattern.hasMatch(vaccinationController.text)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text(
-                "สถานะการฉีดวัคซีนต้องเป็นตัวอักษรภาษาไทยหรือภาษาอังกฤษเท่านั้น")),
       );
       return;
     }
@@ -92,6 +319,7 @@ class _CatRegistrationPageState extends State<CatRegistrationPage> {
         breed: breedController.text,
         imagePath: "",
         birthDate: Timestamp.fromDate(birthDate!),
+        vaccinations: getSelectedVaccinations(),
       );
 
       await FirebaseFirestore.instance
@@ -108,8 +336,8 @@ class _CatRegistrationPageState extends State<CatRegistrationPage> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // ปิดหน้าต่าง dialog
-                Navigator.pop(context); // ย้อนกลับหลังจากบันทึก
+                Navigator.pop(context);
+                Navigator.pop(context);
               },
               child: const Text("ตกลง"),
             ),
@@ -125,112 +353,5 @@ class _CatRegistrationPageState extends State<CatRegistrationPage> {
         isLoading = false;
       });
     }
-
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please log in to register a cat")),
-        );
-        return;
-      }
-
-      Cat newCat = Cat(
-        name: nameController.text,
-        breed: breedController.text,
-        imagePath: "",
-        birthDate: Timestamp.fromDate(birthDate!),
-      );
-
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('cats')
-          .add(newCat.toMap());
-
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Success"),
-          content: const Text("Cat has been registered successfully!"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Go back after saving
-              },
-              child: const Text("OK"),
-            ),
-          ],
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error saving cat: $e")),
-      );
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  // เลือกวันเกิด
-  Future<void> pickDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null && picked != birthDate) {
-      setState(() {
-        birthDate = picked;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Register Cat')),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(labelText: 'Cat Name'),
-                  ),
-                  TextField(
-                    controller: breedController,
-                    decoration: const InputDecoration(labelText: 'Cat Breed'),
-                  ),
-                  TextField(
-                    controller: descriptionController,
-                    decoration: const InputDecoration(labelText: 'Description'),
-                  ),
-                  TextField(
-                    controller: vaccinationController,
-                    decoration:
-                        const InputDecoration(labelText: 'Vaccination Status'),
-                  ),
-                  ListTile(
-                    title: Text(birthDate == null
-                        ? 'Select Birthdate'
-                        : 'Birthdate: ${birthDate!.toLocal()}'),
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: () => pickDate(context),
-                  ),
-                  ElevatedButton(
-                    onPressed: saveCat,
-                    child: const Text('Save Cat'),
-                  ),
-                ],
-              ),
-            ),
-    );
   }
 }

@@ -14,16 +14,23 @@ class ProfileSitter extends StatefulWidget {
 
 class _ProfileSitterState extends State<ProfileSitter> {
   String? profile, name, email, phone;
-  bool isLoading = true; // ตัวแปร isLoading ที่เพิ่มเข้ามา
+  bool isLoading = true;
   final ImagePicker _picker = ImagePicker();
   File? selectedImage;
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
-  Future<void> getUserInfo() async {
-    setState(() => isLoading = true); // เริ่มโหลดข้อมูล
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserProfile();
+  }
+
+  Future<void> _fetchUserProfile() async {
+    setState(() => isLoading = true);
     try {
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null) {
@@ -36,7 +43,7 @@ class _ProfileSitterState extends State<ProfileSitter> {
             userDoc.data() as Map<String, dynamic>?;
 
         setState(() {
-          name = userData?['name'] ?? user.displayName ?? 'No name';
+          name = userData?['name'] ?? user.displayName ?? 'Unknown';
           email = userData?['email'] ?? user.email ?? 'No email';
           phone = userData?['phone'] ?? 'No phone';
           profile = userData?['profilePic'] ?? user.photoURL;
@@ -47,47 +54,45 @@ class _ProfileSitterState extends State<ProfileSitter> {
         });
       }
     } catch (e) {
-      print("Error fetching user info: $e");
+      _showSnackBar('Error loading profile', isError: true);
+    } finally {
+      setState(() => isLoading = false);
     }
-    setState(() => isLoading = false); // หยุดโหลดข้อมูล
   }
 
-  Future<void> getImage() async {
+  Future<void> _updateProfileImage() async {
     try {
       final XFile? pickedImage =
           await _picker.pickImage(source: ImageSource.gallery);
       if (pickedImage == null) return;
 
-      setState(() => selectedImage = File(pickedImage.path));
-
-      Reference firebaseStorageRef = FirebaseStorage.instance
+      // Upload to Firebase Storage
+      Reference storageRef = FirebaseStorage.instance
           .ref()
           .child("profileImages/${DateTime.now().millisecondsSinceEpoch}");
-      UploadTask uploadTask = firebaseStorageRef.putFile(selectedImage!);
+
+      UploadTask uploadTask = storageRef.putFile(File(pickedImage.path));
       String downloadUrl = await (await uploadTask).ref.getDownloadURL();
 
-      await FirebaseAuth.instance.currentUser?.updatePhotoURL(downloadUrl);
+      // Update user profile
       await FirebaseFirestore.instance
           .collection('users')
           .doc(FirebaseAuth.instance.currentUser!.uid)
           .update({'profilePic': downloadUrl});
 
       setState(() => profile = downloadUrl);
+      _showSnackBar('Profile image updated');
     } catch (e) {
-      print("Error uploading image: $e");
+      _showSnackBar('Failed to update profile image', isError: true);
     }
   }
 
-  Future<void> updateProfile() async {
+  Future<void> _updateProfile() async {
     try {
       User? user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
-      if (emailController.text != user.email) {
-        await user.updateEmail(emailController.text);
-      }
-      await user.updateDisplayName(nameController.text);
-
+      // Update Firestore
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -97,154 +102,357 @@ class _ProfileSitterState extends State<ProfileSitter> {
         'phone': phoneController.text,
       });
 
+      // Update Authentication email if changed
+      if (emailController.text != user.email) {
+        await user.updateEmail(emailController.text);
+      }
+
+      // Update display name
+      await user.updateDisplayName(nameController.text);
+
+      // Update local state
       setState(() {
         name = nameController.text;
         email = emailController.text;
         phone = phoneController.text;
       });
 
-      print("Profile updated successfully.");
+      _showSnackBar('Profile updated successfully');
     } catch (e) {
-      print("Error updating profile: $e");
+      _showSnackBar('Failed to update profile', isError: true);
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    getUserInfo();
+  Future<void> _deleteAccount() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      // Reauthenticate user before deletion
+      await _showReauthenticationDialog();
+
+      // Delete Firestore document
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .delete();
+
+      // Delete user from Firebase Authentication
+      await user.delete();
+
+      // Navigate to login screen
+      Navigator.pushReplacementNamed(context, '/login');
+
+      _showSnackBar('Account deleted successfully');
+    } catch (e) {
+      _showSnackBar('Failed to delete account', isError: true);
+      print("Error deleting account: $e");
+    }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              _showLogoutDialog(context);
-            },
-          ),
-        ],
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator()) // แสดงวงล้อโหลด
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  Stack(
-                    children: [
-                      Container(
-                        height: MediaQuery.of(context).size.height / 4.3,
-                        decoration: BoxDecoration(
-                          color: Colors.black,
-                          borderRadius: BorderRadius.vertical(
-                            bottom: Radius.elliptical(
-                                MediaQuery.of(context).size.width, 105),
-                          ),
-                        ),
-                      ),
-                      Center(
-                        child: GestureDetector(
-                          onTap: getImage,
-                          child: Container(
-                            margin: EdgeInsets.only(
-                              top: MediaQuery.of(context).size.height / 6.5,
-                            ),
-                            child: CircleAvatar(
-                              radius: 60,
-                              backgroundImage: profile != null
-                                  ? NetworkImage(profile!)
-                                  : const AssetImage('images/User.png')
-                                      as ImageProvider,
-                              onBackgroundImageError: (_, __) {
-                                setState(() => profile = null);
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+  Future<void> _showReauthenticationDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Account Deletion'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                const Text(
+                    'Please enter your password to confirm account deletion.'),
+                TextField(
+                  controller: passwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Password',
                   ),
-                  const SizedBox(height: 20),
-                  buildProfileInfoRow('Name', name ?? 'No name', Icons.person),
-                  buildProfileInfoRow(
-                      'E-mail', email ?? 'No email', Icons.mail),
-                  buildProfileInfoRow(
-                      'Phone', phone ?? 'No phone', Icons.phone),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: updateProfile,
-                    child: const Text('Save Changes'),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Confirm'),
+              onPressed: () async {
+                try {
+                  User? user = FirebaseAuth.instance.currentUser;
+                  if (user != null) {
+                    // Reauthenticate
+                    AuthCredential credential = EmailAuthProvider.credential(
+                        email: user.email!, password: passwordController.text);
+                    await user.reauthenticateWithCredential(credential);
+
+                    // Close dialog
+                    Navigator.of(context).pop();
+                  }
+                } catch (e) {
+                  // Close current dialog
+                  Navigator.of(context).pop();
+
+                  // Show error
+                  _showSnackBar('Reauthentication failed', isError: true);
+                }
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
-  Widget buildProfileInfoRow(String title, String value, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Material(
-        borderRadius: BorderRadius.circular(10),
-        elevation: 2.0,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: Colors.blue, // สีของกรอบ
-              width: 1.5, // ความหนาของกรอบ
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(icon, color: Colors.black),
-                  const SizedBox(width: 20),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                    ),
-                  ),
-                ],
-              ),
-              IconButton(
-                icon: const Icon(Icons.edit, color: Colors.blue),
-                onPressed: () {
-                  TextEditingController controller = title == 'Name'
-                      ? nameController
-                      : title == 'Phone'
-                          ? phoneController
-                          : emailController;
-
-                  showEditDialog(
-                    context: context,
-                    title: title,
-                    controller: controller,
-                  );
-                },
-              ),
-            ],
-          ),
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red[600] : Colors.green[600],
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
         ),
       ),
     );
   }
 
-  void showEditDialog({
-    required BuildContext context,
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to log out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              FirebaseAuth.instance.signOut();
+              Navigator.pushReplacementNamed(context, '/login');
+            },
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: const Text(
+          'Profile',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: Colors.indigo,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: _showLogoutDialog,
+          ),
+        ],
+      ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildProfileHeader(),
+                  const SizedBox(height: 20),
+                  _buildProfileContent(),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildProfileHeader() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.indigo,
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(30),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Center(
+        child: Column(
+          children: [
+            GestureDetector(
+              onTap: _updateProfileImage,
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 70,
+                    backgroundImage: profile != null
+                        ? NetworkImage(profile!)
+                        : const AssetImage('images/User.png') as ImageProvider,
+                    onBackgroundImageError: (_, __) {
+                      setState(() => profile = null);
+                    },
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            spreadRadius: 1,
+                            blurRadius: 3,
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.camera_alt,
+                          color: Colors.indigo,
+                          size: 20,
+                        ),
+                        onPressed: _updateProfileImage,
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 15),
+            Text(
+              name ?? 'User Name',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileContent() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildProfileField(
+            icon: Icons.person,
+            title: 'Name',
+            value: name ?? 'Not set',
+            onTap: () => _showEditDialog('Name', nameController),
+          ),
+          _buildProfileField(
+            icon: Icons.email,
+            title: 'Email',
+            value: email ?? 'Not set',
+            onTap: () => _showEditDialog('Email', emailController),
+          ),
+          _buildProfileField(
+            icon: Icons.phone,
+            title: 'Phone',
+            value: phone ?? 'Not set',
+            onTap: () => _showEditDialog('Phone', phoneController),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: _updateProfile,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.indigo,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text(
+              'Save Changes',
+              style: TextStyle(fontSize: 16),
+            ),
+          ),
+          const SizedBox(height: 20),
+          TextButton(
+            onPressed: _deleteAccount,
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+            ),
+            child: const Text(
+              'Delete Account',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileField({
+    required IconData icon,
     required String title,
-    required TextEditingController controller,
+    required String value,
+    required VoidCallback onTap,
   }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: Colors.indigo),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.grey,
+            fontSize: 14,
+          ),
+        ),
+        subtitle: Text(
+          value,
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 16,
+          ),
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.edit, color: Colors.indigo),
+          onPressed: onTap,
+        ),
+      ),
+    );
+  }
+
+  void _showEditDialog(String title, TextEditingController controller) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -252,7 +460,12 @@ class _ProfileSitterState extends State<ProfileSitter> {
           title: Text('Edit $title'),
           content: TextField(
             controller: controller,
-            decoration: InputDecoration(hintText: 'Enter $title'),
+            decoration: InputDecoration(
+              hintText: 'Enter $title',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
           ),
           actions: [
             TextButton(
@@ -261,7 +474,7 @@ class _ProfileSitterState extends State<ProfileSitter> {
             ),
             ElevatedButton(
               onPressed: () {
-                updateProfile();
+                _updateProfile();
                 Navigator.of(context).pop();
               },
               child: const Text('Save'),
@@ -269,32 +482,6 @@ class _ProfileSitterState extends State<ProfileSitter> {
           ],
         );
       },
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // ปิด Dialog
-            },
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              FirebaseAuth.instance.signOut();
-              Navigator.pop(context); // ปิด Dialog
-              Navigator.pushReplacementNamed(context, '/login'); // ไปหน้า Login
-            },
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
     );
   }
 }

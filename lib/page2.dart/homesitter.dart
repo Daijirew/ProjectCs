@@ -18,7 +18,7 @@ class _Home2State extends State<Home2> {
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('users')
-          .doc('wVmQtidCCcRFbGevZcICnre9tPo2') // ใช้ user UID
+          .doc('wVmQtidCCcRFbGevZcICnre9tPo2')
           .collection('cats')
           .get();
 
@@ -32,16 +32,27 @@ class _Home2State extends State<Home2> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: const Color(0xFFF5F5F5), // Soft grey background
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Cat Sitter',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                blurRadius: 10.0,
+                color: Colors.black38,
+                offset: Offset(2.0, 2.0),
+              ),
+            ],
+          ),
         ),
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color(0xFF6FDFDF), // Soft teal
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications),
+            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
             onPressed: () {},
           ),
         ],
@@ -52,30 +63,51 @@ class _Home2State extends State<Home2> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Welcome Back!',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.teal[800],
+                ),
               ),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 'Choose a task to start:',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
               ),
               const SizedBox(height: 20),
               _buildTaskSelector(),
               const SizedBox(height: 20),
               FutureBuilder<List<Map<String, dynamic>>>(
-                // ดึงข้อมูลแมวที่เพิ่มใหม่
                 future: _fetchAdoptedCats(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return Center(
+                      child: CircularProgressIndicator(
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Colors.teal[300]!),
+                      ),
+                    );
                   } else if (snapshot.hasError) {
-                    return const Center(child: Text('Error loading cats'));
+                    return Center(
+                      child: Text(
+                        'Error loading cats',
+                        style: TextStyle(color: Colors.red[300]),
+                      ),
+                    );
                   } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                     return _buildCatCards(snapshot.data!);
                   } else {
-                    return const Center(child: Text('No adopted cats found'));
+                    return Center(
+                      child: Text(
+                        'No adopted cats found',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    );
                   }
                 },
               ),
@@ -90,75 +122,83 @@ class _Home2State extends State<Home2> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildTaskItem('images/cat.png', cat, () {
-          setState(() {
-            cat = true;
-            paw = false;
-            backpack = false;
-            ball = false;
-          });
+        _buildTaskItem('images/cat.png', 'Find Cat', cat, () {
+          _updateTaskState(TaskType.cat);
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  CatSearchPage(), // เปลี่ยนหน้าไป CatSearchPage
-            ),
+            MaterialPageRoute(builder: (context) => CatSearchPage()),
           );
         }),
-        _buildTaskItem('images/paw.png', paw, () {
-          setState(() {
-            cat = false;
-            paw = true;
-            backpack = false;
-            ball = false;
-          });
+        _buildTaskItem('images/paw.png', 'Sitter', paw, () {
+          _updateTaskState(TaskType.paw);
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => SitterReviewsPage(),
-            ),
+            MaterialPageRoute(builder: (context) => SitterReviewsPage()),
           );
         }),
-        _buildTaskItem('images/backpack.png', backpack, () {
-          setState(() {
-            cat = false;
-            paw = false;
-            backpack = true;
-            ball = false;
-          });
+        _buildTaskItem('images/backpack.png', 'Travel', backpack, () {
+          _updateTaskState(TaskType.backpack);
         }),
-        _buildTaskItem('images/ball.png', ball, () {
-          setState(() {
-            cat = false;
-            paw = false;
-            backpack = false;
-            ball = true;
-          });
+        _buildTaskItem('images/ball.png', 'Play', ball, () {
+          _updateTaskState(TaskType.ball);
         }),
       ],
     );
   }
 
-  Widget _buildTaskItem(String imagePath, bool isSelected, VoidCallback onTap) {
+  void _updateTaskState(TaskType type) {
+    setState(() {
+      cat = type == TaskType.cat;
+      paw = type == TaskType.paw;
+      backpack = type == TaskType.backpack;
+      ball = type == TaskType.ball;
+    });
+  }
+
+  Widget _buildTaskItem(
+      String imagePath, String label, bool isSelected, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Material(
-        elevation: 5,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.black : Colors.white,
-            borderRadius: BorderRadius.circular(10),
+      child: Column(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.teal[100] : Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+              border: Border.all(
+                color: isSelected ? Colors.teal : Colors.transparent,
+                width: 2,
+              ),
+            ),
+            child: Image.asset(
+              imagePath,
+              height: 50,
+              width: 50,
+              fit: BoxFit.contain,
+              color: isSelected ? Colors.teal : Colors.black54,
+            ),
           ),
-          child: Image.asset(
-            imagePath,
-            height: 50,
-            width: 50,
-            fit: BoxFit.cover,
-            color: isSelected ? Colors.white : Colors.black,
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Colors.teal : Colors.black54,
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -180,39 +220,74 @@ class _Home2State extends State<Home2> {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                  builder: (context) => const Details()), // เปิดหน้า Details
+              MaterialPageRoute(builder: (context) => const Details()),
             );
           },
-          child: Material(
-            elevation: 5,
-            borderRadius: BorderRadius.circular(15),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Column(
-                children: [
-                  cat['imagePath'] != null && cat['imagePath'].isNotEmpty
-                      ? Image.network(
-                          cat['imagePath'],
-                          height: 100,
-                          fit: BoxFit.cover,
-                        )
-                      : Image.asset('images/cat.png',
-                          height: 100, fit: BoxFit.cover),
-                  const SizedBox(height: 10),
-                  Text(
-                    cat['name'] ?? 'Unknown Cat',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    cat['breed'] ?? 'Unknown Breed',
-                    style: const TextStyle(color: Colors.grey),
-                  ),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white,
+                  Colors.grey[50]!,
                 ],
               ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.3),
+                  spreadRadius: 1,
+                  blurRadius: 5,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
+                  child: cat['imagePath'] != null && cat['imagePath'].isNotEmpty
+                      ? Image.network(
+                          cat['imagePath'],
+                          height: 150,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.asset(
+                          'images/cat.png',
+                          height: 150,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      Text(
+                        cat['name'] ?? 'Unknown Cat',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal[800],
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        cat['breed'] ?? 'Unknown Breed',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -220,3 +295,5 @@ class _Home2State extends State<Home2> {
     );
   }
 }
+
+enum TaskType { cat, paw, backpack, ball }
