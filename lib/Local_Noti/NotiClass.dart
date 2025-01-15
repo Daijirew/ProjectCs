@@ -34,6 +34,12 @@ class NotifiationServices {
         'This is the title',
         'Hi there is some surprise for you.',
         RepeatInterval.everyMinute,
-        notificationDetails);
+        notificationDetails,
+        androidScheduleMode:
+            AndroidScheduleMode.exactAllowWhileIdle); // Add this line
+  }
+
+  void stopNoti() async {
+    await flutterLocalNotificationsPlugin.cancelAll();
   }
 }

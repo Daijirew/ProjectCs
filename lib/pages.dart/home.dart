@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:myproject/Catpage.dart/cat_history.dart';
 import 'package:myproject/pages.dart/details.dart';
+import 'package:myproject/pages.dart/matching/matching.dart';
 import 'package:myproject/pages.dart/reviwe.dart';
 import 'package:myproject/widget/widget_support.dart';
 
@@ -199,11 +200,13 @@ class _MyWidgetState extends State<Home> {
         ),
         GestureDetector(
           onTap: () {
-            cat = false;
-            paw = false;
-            backpack = true;
-            ball = false;
-            setState(() {});
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    SelectTargetDateScreen(onDateSelected: (selectedDate) {}),
+              ),
+            );
           },
           child: Material(
             elevation: 5,
