@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:myproject/pages.dart/reviwe.dart';
 
 class SitterProfileScreen extends StatefulWidget {
   final String sitterId;
@@ -24,11 +26,15 @@ class _SitterProfileScreenState extends State<SitterProfileScreen> {
   Map<String, dynamic>? _locationData;
   final Set<Marker> _markers = {};
   final DateFormat _dateFormatter = DateFormat('dd MMM yyyy', 'th');
+  List<Review> _reviews = [];
+  double _averageRating = 0;
+  bool _loadingReviews = true;
 
   @override
   void initState() {
     super.initState();
     _loadSitterData();
+    _loadReviews();
   }
 
   Future<void> _loadSitterData() async {
@@ -77,6 +83,163 @@ class _SitterProfileScreenState extends State<SitterProfileScreen> {
     }
   }
 
+  Future<void> _loadReviews() async {
+    try {
+      final QuerySnapshot snapshot = await _firestore
+          .collection(ReviewConstants.collectionName)
+          .where('sitterId', isEqualTo: widget.sitterId)
+          .orderBy('timestamp', descending: true)
+          .limit(5)
+          .get();
+
+      final reviews =
+          snapshot.docs.map((doc) => Review.fromFirestore(doc)).toList();
+
+      // Calculate average rating
+      if (snapshot.docs.isNotEmpty) {
+        final totalRating = snapshot.docs
+            .map((doc) => (doc.get('rating') as num).toDouble())
+            .fold<double>(0, (sum, rating) => sum + rating);
+
+        setState(() {
+          _reviews = reviews;
+          _averageRating = totalRating / snapshot.docs.length;
+          _loadingReviews = false;
+        });
+      } else {
+        setState(() {
+          _reviews = [];
+          _averageRating = 0;
+          _loadingReviews = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading reviews: $e');
+      setState(() => _loadingReviews = false);
+    }
+  }
+
+  Widget _buildReviewsSection() {
+    if (_loadingReviews) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'รีวิวจากลูกค้า',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_reviews.length} รีวิว',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+                if (_reviews.isNotEmpty)
+                  Row(
+                    children: [
+                      Text(
+                        _averageRating.toStringAsFixed(1),
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.star, color: Colors.amber),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+          if (_reviews.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(
+                child: Text('ยังไม่มีรีวิว'),
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _reviews.length,
+              separatorBuilder: (context, index) => const Divider(),
+              itemBuilder: (context, index) {
+                final review = _reviews[index];
+                return ListTile(
+                  leading: const CircleAvatar(
+                    child: Icon(Icons.person),
+                  ),
+                  title: Row(
+                    children: [
+                      RatingBarIndicator(
+                        rating: review.rating,
+                        itemBuilder: (context, _) => const Icon(
+                          Icons.star,
+                          color: Colors.amber,
+                        ),
+                        itemCount: 5,
+                        itemSize: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatDate(review.timestamp),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(review.comment),
+                  ),
+                );
+              },
+            ),
+          TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ReviewsPage(
+                    itemId: '',
+                    sitterId: widget.sitterId,
+                  ),
+                ),
+              );
+            },
+            child: const Text('ดูรีวิวทั้งหมด'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      if (difference.inHours == 0) {
+        return '${difference.inMinutes}m ago';
+      }
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d ago';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -117,6 +280,10 @@ class _SitterProfileScreenState extends State<SitterProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Reviews Section
+                  _buildReviewsSection(),
+                  const SizedBox(height: 16),
+
                   // วันที่เลือก
                   Card(
                     child: Padding(
