@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:myproject/Catpage.dart/CatDetailsPage.dart';
 import 'package:myproject/Catpage.dart/CatRegistrationPage.dart';
 import 'package:myproject/page2.dart/homesitter.dart';
@@ -25,7 +26,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp( 
+      localizationsDelegates: const [
+
+        GlobalMaterialLocalizations
+        .delegate,
+
+        GlobalWidgetsLocalizations
+        .delegate,
+
+        GlobalCupertinoLocalizations
+        .delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', 'US'),
+        Locale('ar', 'TH'),
+      ],
       debugShowCheckedModeBanner: false,
       home: LogIn(),
     );

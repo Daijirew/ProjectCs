@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:myproject/Catpage.dart/cat_history.dart';
+import 'package:myproject/page2.dart/location/location.dart';
 import 'package:myproject/pages.dart/details.dart';
+import 'package:myproject/pages.dart/matching/matching.dart';
 import 'package:myproject/pages.dart/reviwe.dart';
 import 'package:myproject/widget/widget_support.dart';
 
@@ -108,12 +110,25 @@ class _MyWidgetState extends State<Home> {
             backpack = true;
             cat = paw = ball = false;
           });
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  SelectTargetDateScreen(onDateSelected: (selectedDate) {}),
+            ),
+          );
         }),
         _buildActionItem('images/ball.png', ball, () {
           setState(() {
             ball = true;
             cat = paw = backpack = false;
           });
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LocationMapPage(),
+            ),
+          );
         }),
       ],
     );
