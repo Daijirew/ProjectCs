@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:myproject/page2.dart/_CatSearchPageState.dart';
+import 'package:myproject/page2.dart/location/location.dart';
 import 'package:myproject/page2.dart/showreviwe.dart';
+import 'package:myproject/page2.dart/workdate/workdate.dart';
 import 'package:myproject/pages.dart/details.dart';
+import 'package:myproject/pages.dart/matching/matching.dart';
 
 class Home2 extends StatefulWidget {
   const Home2({super.key});
@@ -122,7 +125,7 @@ class _Home2State extends State<Home2> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildTaskItem('images/cat.png', 'Find Cat', cat, () {
+        _buildTaskItem('images/cat.png', 'Cat', cat, () {
           _updateTaskState(TaskType.cat);
           Navigator.push(
             context,
@@ -138,9 +141,21 @@ class _Home2State extends State<Home2> {
         }),
         _buildTaskItem('images/backpack.png', 'Travel', backpack, () {
           _updateTaskState(TaskType.backpack);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AvailableDatesPage(),
+            ),
+          );
         }),
         _buildTaskItem('images/ball.png', 'Play', ball, () {
           _updateTaskState(TaskType.ball);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LocationMapPage(),
+            ),
+          );
         }),
       ],
     );

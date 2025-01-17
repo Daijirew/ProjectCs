@@ -19,16 +19,18 @@ class Cat {
   // ปรับปรุง factory constructor
   factory Cat.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    print("Raw data from Firestore: $data"); // ดูข้อมูลดิบ
 
-    return Cat(
+    Cat cat = Cat(
       name: data['name'] ?? '',
       breed: data['breed'] ?? '',
       imagePath: data['imagePath'] ?? '',
       birthDate: data['birthDate'],
-      vaccinations: data['vaccinations'] ?? '', // อ่านข้อมูล vaccinations
+      vaccinations: data['vaccinations'] ?? '',
     );
+    print("Created Cat object: $cat"); // ดูว่าสร้าง object สำเร็จไหม
+    return cat;
   }
-
   // ปรับปรุงเมธอด toMap
   Map<String, dynamic> toMap() {
     return {
