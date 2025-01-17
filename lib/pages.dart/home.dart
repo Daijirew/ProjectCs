@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myproject/Catpage.dart/cat_history.dart';
 import 'package:myproject/pages.dart/details.dart';
-import 'package:myproject/pages.dart/matching/matching.dart';
 import 'package:myproject/pages.dart/reviwe.dart';
 import 'package:myproject/widget/widget_support.dart';
 
@@ -65,7 +64,7 @@ class _MyWidgetState extends State<Home> {
                   BoxShadow(
                     color: Colors.teal.withOpacity(0.3),
                     blurRadius: 8,
-                    offset:const Offset(0, 3),
+                    offset: const Offset(0, 3),
                   )
                 ]),
             child: const Icon(Icons.home, color: Colors.white),
@@ -132,7 +131,7 @@ class _MyWidgetState extends State<Home> {
               BoxShadow(
                 color: Colors.grey.withOpacity(0.3),
                 blurRadius: 8,
-                offset: const Offset(0, 3),
+                offset: Offset(0, 3),
               )
             ]),
         child: Image.asset(
@@ -166,7 +165,7 @@ class _MyWidgetState extends State<Home> {
       },
       child: Container(
         width: 200,
-        padding: const EdgeInsets.all(15),
+        padding: EdgeInsets.all(15),
         decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
@@ -174,7 +173,7 @@ class _MyWidgetState extends State<Home> {
               BoxShadow(
                 color: Colors.grey.withOpacity(0.2),
                 blurRadius: 8,
-                offset:const  Offset(0, 3),
+                offset: Offset(0, 3),
               )
             ]),
         child: Column(
@@ -196,93 +195,7 @@ class _MyWidgetState extends State<Home> {
             Text('Total cat $cats', style: AppWidget.semiboldTextFeildStyle()),
           ],
         ),
-<<<<<<< HEAD
       ),
-=======
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ReviewsPage(
-                    itemId: 'some_item_id'), // แก้ไขโดยการส่ง itemId
-              ),
-            );
-          },
-          child: Material(
-            elevation: 5,
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                  color: paw ? Colors.black : Colors.white,
-                  borderRadius: BorderRadius.circular(10)),
-              child: Image.asset(
-                'images/paw.png',
-                height: 50,
-                width: 50,
-                fit: BoxFit.cover,
-                color: paw ? Colors.white : Colors.black,
-              ),
-            ),
-          ),
-        ),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    SelectTargetDateScreen(onDateSelected: (selectedDate) {}),
-              ),
-            );
-          },
-          child: Material(
-            elevation: 5,
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                  color: backpack ? Colors.black : Colors.white,
-                  borderRadius: BorderRadius.circular(10)),
-              child: Image.asset(
-                'images/backpack.png',
-                height: 50,
-                width: 50,
-                fit: BoxFit.cover,
-                color: backpack ? Colors.white : Colors.black,
-              ),
-            ),
-          ),
-        ),
-        GestureDetector(
-          onTap: () {
-            cat = false;
-            paw = false;
-            backpack = false;
-            ball = true;
-            setState(() {});
-          },
-          child: Material(
-            elevation: 5,
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                  color: ball ? Colors.black : Colors.white,
-                  borderRadius: BorderRadius.circular(10)),
-              child: Image.asset(
-                'images/ball.png',
-                height: 50,
-                width: 50,
-                fit: BoxFit.cover,
-                color: ball ? Colors.white : Colors.black,
-              ),
-            ),
-          ),
-        ),
-      ],
->>>>>>> 77ba87e34f9fd61e50954092ef4195966e2cd76e
     );
   }
 }
