@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:myproject/Catpage.dart/cat_history.dart';
 import 'package:myproject/pages.dart/details.dart';
+import 'package:myproject/pages.dart/matching/matching.dart';
 import 'package:myproject/pages.dart/reviwe.dart';
 import 'package:myproject/widget/widget_support.dart';
 
@@ -195,7 +196,93 @@ class _MyWidgetState extends State<Home> {
             Text('Total cat $cats', style: AppWidget.semiboldTextFeildStyle()),
           ],
         ),
+<<<<<<< HEAD
       ),
+=======
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ReviewsPage(
+                    itemId: 'some_item_id'), // แก้ไขโดยการส่ง itemId
+              ),
+            );
+          },
+          child: Material(
+            elevation: 5,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                  color: paw ? Colors.black : Colors.white,
+                  borderRadius: BorderRadius.circular(10)),
+              child: Image.asset(
+                'images/paw.png',
+                height: 50,
+                width: 50,
+                fit: BoxFit.cover,
+                color: paw ? Colors.white : Colors.black,
+              ),
+            ),
+          ),
+        ),
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    SelectTargetDateScreen(onDateSelected: (selectedDate) {}),
+              ),
+            );
+          },
+          child: Material(
+            elevation: 5,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                  color: backpack ? Colors.black : Colors.white,
+                  borderRadius: BorderRadius.circular(10)),
+              child: Image.asset(
+                'images/backpack.png',
+                height: 50,
+                width: 50,
+                fit: BoxFit.cover,
+                color: backpack ? Colors.white : Colors.black,
+              ),
+            ),
+          ),
+        ),
+        GestureDetector(
+          onTap: () {
+            cat = false;
+            paw = false;
+            backpack = false;
+            ball = true;
+            setState(() {});
+          },
+          child: Material(
+            elevation: 5,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                  color: ball ? Colors.black : Colors.white,
+                  borderRadius: BorderRadius.circular(10)),
+              child: Image.asset(
+                'images/ball.png',
+                height: 50,
+                width: 50,
+                fit: BoxFit.cover,
+                color: ball ? Colors.white : Colors.black,
+              ),
+            ),
+          ),
+        ),
+      ],
+>>>>>>> 77ba87e34f9fd61e50954092ef4195966e2cd76e
     );
   }
 }
