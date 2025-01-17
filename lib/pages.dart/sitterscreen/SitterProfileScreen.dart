@@ -3,7 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:myproject/page2.dart/showreviwe.dart';
 import 'package:myproject/pages.dart/reviwe.dart';
+import 'package:myproject/pages.dart/sitterscreen/bookingService.dart';
 
 class SitterProfileScreen extends StatefulWidget {
   final String sitterId;
@@ -210,10 +212,7 @@ class _SitterProfileScreenState extends State<SitterProfileScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ReviewsPage(
-                    itemId: '',
-                    sitterId: widget.sitterId,
-                  ),
+                  builder: (context) => SitterReviewsPage(),
                 ),
               );
             },
@@ -381,9 +380,17 @@ class _SitterProfileScreenState extends State<SitterProfileScreen> {
           padding: const EdgeInsets.all(16.0),
           child: ElevatedButton(
             onPressed: () {
-              // TODO: Implement booking functionality
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('ระบบจองกำลังพัฒนา')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BookingScreen(
+                    sitterId: widget.sitterId,
+                    selectedDates: widget.targetDates,
+                    sitterName: _sitterData!['name'],
+                    pricePerDay: _sitterData!['pricePerDay'] ??
+                        300.0, // Add default price or get from sitter data
+                  ),
+                ),
               );
             },
             style: ElevatedButton.styleFrom(

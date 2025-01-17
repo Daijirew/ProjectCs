@@ -100,7 +100,7 @@ class _MyWidgetState extends State<Home> {
             MaterialPageRoute(
               builder: (context) => const ReviewsPage(
                 itemId: 'booking_id',
-                sitterId: 'qMiu4Jh11Mbj5vzV3YEi23qp0Kv1',
+                sitterId: 'bezIZSK9zXOkKNocc6BTXPpxOg12',
               ),
             ),
           );

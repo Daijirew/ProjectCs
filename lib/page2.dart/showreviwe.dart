@@ -3,14 +3,23 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class SitterReviewsPage extends StatelessWidget {
+  final String? sitterId; // Add sitterId parameter
+
+  const SitterReviewsPage({
+    Key? key,
+    this.sitterId, // Make it optional to maintain backward compatibility
+  }) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
+    // Use sitterId if provided, otherwise use current user's ID
     final currentUser = FirebaseAuth.instance.currentUser;
+    final targetUserId = sitterId ?? currentUser?.uid;
 
-    if (currentUser == null) {
+    if (targetUserId == null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('My Reviews'),
+          title: const Text('Reviews'),
         ),
         body: const Center(
           child: Text('Please log in to see reviews.'),
@@ -20,14 +29,14 @@ class SitterReviewsPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Reviews'),
+        title: const Text('Reviews'),
         backgroundColor: Colors.purple,
         elevation: 0,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('reviews')
-            .where('sitterId', isEqualTo: currentUser.uid)
+            .where('sitterId', isEqualTo: targetUserId)
             .orderBy('timestamp', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
@@ -45,7 +54,7 @@ class SitterReviewsPage extends StatelessWidget {
 
           final reviews = snapshot.data!.docs;
 
-          // คำนวณคะแนนเฉลี่ย
+          // Calculate average rating
           double totalRating = reviews.fold<double>(
             0,
             (sum, review) => sum + (review['rating'] ?? 0),
@@ -54,14 +63,11 @@ class SitterReviewsPage extends StatelessWidget {
 
           return Column(
             children: [
-              SizedBox(height: 20),
-              // ส่วนหัวคะแนนเฉลี่ย
+              const SizedBox(height: 20),
+              // Average rating header
               Container(
-                margin: const EdgeInsets.symmetric(
-                    horizontal: 16), // ปรับระยะขอบซ้ายขวาที่นี่
-                padding: const EdgeInsets.symmetric(
-                  vertical: 20, // ระยะขอบด้านบน-ล่าง
-                ),
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(vertical: 20),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
@@ -75,24 +81,25 @@ class SitterReviewsPage extends StatelessWidget {
                     Text(
                       'Average Rating',
                       style: TextStyle(
-                        fontSize: 22, // ลดขนาดฟอนต์
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: Colors.white.withOpacity(0.9),
                       ),
                     ),
-                    const SizedBox(height: 8), // ลดขนาดระยะห่าง
+                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.star,
-                            color: Colors.amberAccent,
-                            size: 30.0), // ปรับขนาดไอคอน
-                        const SizedBox(
-                            width: 6), // ปรับระยะห่างระหว่างไอคอนกับตัวเลข
+                        const Icon(
+                          Icons.star,
+                          color: Colors.amberAccent,
+                          size: 30.0,
+                        ),
+                        const SizedBox(width: 6),
                         Text(
                           averageRating.toStringAsFixed(1),
                           style: const TextStyle(
-                            fontSize: 30, // ขนาดฟอนต์ตัวเลข
+                            fontSize: 30,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
@@ -101,7 +108,7 @@ class SitterReviewsPage extends StatelessWidget {
                         Text(
                           '(${reviews.length} reviews)',
                           style: TextStyle(
-                            fontSize: 14, // ลดขนาดฟอนต์ของจำนวนรีวิว
+                            fontSize: 14,
                             color: Colors.white.withOpacity(0.8),
                           ),
                         ),
@@ -117,8 +124,6 @@ class SitterReviewsPage extends StatelessWidget {
                   itemCount: reviews.length,
                   itemBuilder: (context, index) {
                     final review = reviews[index];
-
-                    // ดึงข้อมูลชื่อผู้ใช้จาก Firestore
                     return FutureBuilder<DocumentSnapshot>(
                       future: FirebaseFirestore.instance
                           .collection('users')
@@ -143,10 +148,9 @@ class SitterReviewsPage extends StatelessWidget {
 
                         return Card(
                           margin: const EdgeInsets.symmetric(vertical: 8.0),
-                          elevation: 10, // เพิ่มความชัดเจนของแรเงา
+                          elevation: 10,
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(18), // ขอบโค้งสวยงาม
+                            borderRadius: BorderRadius.circular(18),
                           ),
                           color: Colors.white,
                           child: Padding(
@@ -156,7 +160,7 @@ class SitterReviewsPage extends StatelessWidget {
                               children: [
                                 Row(
                                   children: [
-                                    Icon(
+                                    const Icon(
                                       Icons.star,
                                       color: Colors.amberAccent,
                                       size: 24.0,
@@ -188,7 +192,6 @@ class SitterReviewsPage extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 10),
-                                // แสดงชื่อผู้ใช้
                                 Text(
                                   'Reviewed by: $userName',
                                   style: const TextStyle(
