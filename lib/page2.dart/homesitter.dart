@@ -122,7 +122,7 @@ class _Home2State extends State<Home2> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildTaskItem('images/cat.png', 'Find Cat', cat, () {
+        _buildTaskItem('images/cat.png', 'Cat', cat, () {
           _updateTaskState(TaskType.cat);
           Navigator.push(
             context,
