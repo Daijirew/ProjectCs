@@ -1,44 +1,46 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Cat {
-  String name;
-  String breed;
-  String imagePath;
-  Timestamp? birthDate;
-  String vaccinations; // เพิ่มฟิลด์ vaccinations
+  final String id; // เพิ่ม id
+  final String name;
+  final String breed;
+  final String imagePath;
+  final Timestamp? birthDate;
+  final String vaccinations;
+  final String description;
 
-  // ปรับปรุงคอนสตรัคเตอร์
   Cat({
+    required this.id, // เพิ่ม id ในคอนสตรัคเตอร์
     required this.name,
     required this.breed,
     required this.imagePath,
     this.birthDate,
-    required this.vaccinations, // เพิ่ม vaccinations เป็น required parameter
+    required this.vaccinations,
+    required this.description,
   });
 
-  // ปรับปรุง factory constructor
   factory Cat.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-    print("Raw data from Firestore: $data"); // ดูข้อมูลดิบ
-
-    Cat cat = Cat(
+    return Cat(
+      id: doc.id, // ดึง id จาก DocumentSnapshot
       name: data['name'] ?? '',
       breed: data['breed'] ?? '',
       imagePath: data['imagePath'] ?? '',
       birthDate: data['birthDate'],
       vaccinations: data['vaccinations'] ?? '',
+      description: data['description'] ?? '',
     );
-    print("Created Cat object: $cat"); // ดูว่าสร้าง object สำเร็จไหม
-    return cat;
   }
-  // ปรับปรุงเมธอด toMap
+
   Map<String, dynamic> toMap() {
     return {
       'name': name,
       'breed': breed,
       'imagePath': imagePath,
       'birthDate': birthDate,
-      'vaccinations': vaccinations, // เพิ่มการบันทึกข้อมูล vaccinations
+      'vaccinations': vaccinations,
+      'description': description,
+      // ไม่ต้องใส่ id ใน map เพราะใช้เป็น document id อยู่แล้ว
     };
   }
 }

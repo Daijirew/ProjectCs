@@ -315,11 +315,13 @@ class _CatRegistrationPageState extends State<CatRegistrationPage> {
       }
 
       Cat newCat = Cat(
+        id: '', // กำหนดค่า id เป็นค่าว่าง
         name: nameController.text,
         breed: breedController.text,
-        imagePath: "",
+        imagePath: '', // ค่า imagePath สามารถแก้ไขในภายหลังได้
         birthDate: Timestamp.fromDate(birthDate!),
         vaccinations: getSelectedVaccinations(),
+        description: descriptionController.text, // ระบุค่า description
       );
 
       await FirebaseFirestore.instance

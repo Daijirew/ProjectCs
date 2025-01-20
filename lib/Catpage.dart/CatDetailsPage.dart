@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myproject/Catpage.dart/CatEdid.dart';
 import 'cat.dart';
 
 class CatDetailsPage extends StatelessWidget {
@@ -28,6 +29,13 @@ class CatDetailsPage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.edit, color: Colors.white),
             onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CatEditPage(cat: cat),
+                ),
+              );
+
               // TODO: เพิ่มฟังก์ชันแก้ไขข้อมูลแมว
             },
           ),
