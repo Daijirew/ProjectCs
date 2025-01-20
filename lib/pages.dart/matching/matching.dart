@@ -5,6 +5,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'dart:math';
 
+import 'package:myproject/pages.dart/sitterscreen/SitterProfileScreen.dart';
+
 class SelectTargetDateScreen extends StatefulWidget {
   final Function(List<DateTime>) onDateSelected;
 
@@ -484,7 +486,15 @@ class _SearchSittersScreenState extends State<SearchSittersScreen> {
                               ],
                             ),
                             onTap: () {
-                              // TODO: Navigate to sitter detail screen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SitterProfileScreen(
+                                    sitterId: sitter['id'],
+                                    targetDates: widget.targetDates,
+                                  ),
+                                ),
+                              );
                             },
                           ),
                         );
