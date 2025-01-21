@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'cat.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CatEditPage extends StatefulWidget {
   final Cat cat;
@@ -37,9 +38,15 @@ class _CatEditPageState extends State<CatEditPage> {
   }
 
   void _saveChanges() async {
-    // อัปเดตข้อมูลใน Firestore
     try {
+      // ดึง user ปัจจุบัน
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      // อัพเดตข้อมูลแมวใน Firestore
       await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
           .collection('cats')
           .doc(widget.cat.id)
           .update({
@@ -49,7 +56,6 @@ class _CatEditPageState extends State<CatEditPage> {
         'description': descriptionController.text,
       });
 
-      // เมื่ออัปเดตสำเร็จ ให้กลับไปที่หน้าก่อนหน้า
       Navigator.pop(
         context,
         Cat(
@@ -62,8 +68,11 @@ class _CatEditPageState extends State<CatEditPage> {
           description: descriptionController.text,
         ),
       );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Successfully updated ${widget.cat.name}')),
+      );
     } catch (e) {
-      // หากมีข้อผิดพลาดเกิดขึ้น
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to update cat data: $e')),
       );
@@ -74,52 +83,155 @@ class _CatEditPageState extends State<CatEditPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Cat Details'),
+        title: Text('Edit ${widget.cat.name}'),
         backgroundColor: Colors.orange.shade400,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _saveChanges,
-          ),
-        ],
+        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(),
-              ),
+      backgroundColor: Colors.grey[100],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.orange.shade200, Colors.white],
+          ),
+        ),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // รูปแมว
+                Container(
+                  height: 200,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child: widget.cat.imagePath.isNotEmpty
+                        ? Image.network(
+                            widget.cat.imagePath,
+                            fit: BoxFit.cover,
+                          )
+                        : Container(
+                            color: Colors.grey[200],
+                            child: Icon(
+                              Icons.pets,
+                              size: 50,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // ฟอร์มแก้ไข
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      _buildTextField(
+                        controller: nameController,
+                        label: 'Name',
+                        icon: Icons.pets,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: breedController,
+                        label: 'Breed',
+                        icon: Icons.category,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: vaccinationsController,
+                        label: 'Vaccinations',
+                        icon: Icons.medical_services,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: descriptionController,
+                        label: 'Description',
+                        icon: Icons.description,
+                        maxLines: 4,
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // ปุ่มบันทึก
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: _saveChanges,
+                    child: const Text(
+                      'Save Changes',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: breedController,
-              decoration: const InputDecoration(
-                labelText: 'Breed',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: vaccinationsController,
-              decoration: const InputDecoration(
-                labelText: 'Vaccinations',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 4,
-            ),
-          ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    int maxLines = 1,
+  }) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: Colors.orange),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.orange, width: 2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade300),
         ),
       ),
     );

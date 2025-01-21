@@ -2,25 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:myproject/Catpage.dart/CatEdid.dart';
 import 'cat.dart';
 
-class CatDetailsPage extends StatelessWidget {
+class CatDetailsPage extends StatefulWidget {
   final Cat cat;
-
   const CatDetailsPage({Key? key, required this.cat}) : super(key: key);
+
+  @override
+  State<CatDetailsPage> createState() => _CatDetailsPageState();
+}
+
+class _CatDetailsPageState extends State<CatDetailsPage> {
+  late Cat currentCat;
+
+  @override
+  void initState() {
+    super.initState();
+    currentCat = widget.cat;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ปรับ AppBar ให้ดูทันสมัยขึ้น
       appBar: AppBar(
         title: Text(
-          '${cat.name}\'s Profile',
+          '${currentCat.name}\' Profile',
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
         ),
         backgroundColor: Colors.orange.shade400,
-        elevation: 0, // ลบเงา
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -28,15 +39,19 @@ class CatDetailsPage extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              final updatedCat = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => CatEditPage(cat: cat),
+                  builder: (context) => CatEditPage(cat: currentCat),
                 ),
               );
 
-              // TODO: เพิ่มฟังก์ชันแก้ไขข้อมูลแมว
+              if (updatedCat != null) {
+                setState(() {
+                  currentCat = updatedCat;
+                });
+              }
             },
           ),
         ],
@@ -52,14 +67,13 @@ class CatDetailsPage extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // ส่วนแสดงรูปภาพ
               Container(
                 height: 300,
                 width: double.infinity,
                 margin: const EdgeInsets.all(16),
                 child: Hero(
-                  tag: 'cat-${cat.name}',
-                  child: cat.imagePath.isNotEmpty
+                  tag: 'cat-${currentCat.name}',
+                  child: currentCat.imagePath.isNotEmpty
                       ? Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(25),
@@ -74,7 +88,7 @@ class CatDetailsPage extends StatelessWidget {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(25),
                             child: Image.network(
-                              cat.imagePath,
+                              currentCat.imagePath,
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -92,12 +106,11 @@ class CatDetailsPage extends StatelessWidget {
                         ),
                 ),
               ),
-
-              // ส่วนแสดงข้อมูล
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(25),
                   boxShadow: [
                     BoxShadow(
@@ -107,38 +120,54 @@ class CatDetailsPage extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildInfoRow(
-                        Icons.pets,
-                        'Name',
-                        cat.name,
-                        Colors.orange.shade400,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8, bottom: 16),
+                      child: Text(
+                        'Pet Information',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange.shade700,
+                        ),
                       ),
-                      const SizedBox(height: 20),
-                      _buildInfoRow(
-                        Icons.category,
-                        'Breed',
-                        cat.breed,
-                        Colors.orange.shade400,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildInfoRow(
-                        Icons.cake,
-                        'Birthday',
-                        cat.birthDate?.toDate().toString().split(' ')[0] ??
-                            'Unknown',
-                        Colors.orange.shade400,
-                      ),
-                    ],
-                  ),
+                    ),
+                    _buildInfoRow(
+                      Icons.pets,
+                      'Name',
+                      currentCat.name,
+                      Colors.orange.shade400,
+                    ),
+                    _buildInfoRow(
+                      Icons.category,
+                      'Breed',
+                      currentCat.breed,
+                      Colors.orange.shade400,
+                    ),
+                    _buildInfoRow(
+                      Icons.cake,
+                      'Birthday',
+                      currentCat.birthDate?.toDate().toString().split(' ')[0] ??
+                          'Unknown',
+                      Colors.orange.shade400,
+                    ),
+                    _buildInfoRow(
+                      Icons.medical_services,
+                      'Vaccinations',
+                      currentCat.vaccinations,
+                      Colors.orange.shade400,
+                    ),
+                    _buildInfoRow(
+                      Icons.description,
+                      'Description',
+                      currentCat.description,
+                      Colors.orange.shade400,
+                    ),
+                  ],
                 ),
               ),
-
-              // เพิ่มปุ่มดำเนินการ
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -169,37 +198,63 @@ class CatDetailsPage extends StatelessWidget {
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value, Color color) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
             color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
+            blurRadius: 5,
+            spreadRadius: 1,
           ),
-          child: Icon(icon, color: color),
-        ),
-        const SizedBox(width: 15),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 14,
-              ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label.toUpperCase(),
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade800,
+                    height: 1.5,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
