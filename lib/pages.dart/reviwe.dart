@@ -125,9 +125,14 @@ class _ReviewsPageState extends State<ReviewsPage> {
   Future<void> _loadInitialReviews() async {
     setState(() => _isLoading = true);
     try {
+      // ดึง ID ของ user ปัจจุบัน
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+
       final QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection(ReviewConstants.collectionName)
           .where('sitterId', isEqualTo: widget.sitterId)
+          .where('userId', isEqualTo: currentUser.uid) // เพิ่มเงื่อนไขนี้
           .orderBy('timestamp', descending: true)
           .limit(ReviewConstants.pageSize)
           .get();
@@ -145,9 +150,13 @@ class _ReviewsPageState extends State<ReviewsPage> {
 
     setState(() => _isLoading = true);
     try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+
       final QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection(ReviewConstants.collectionName)
           .where('sitterId', isEqualTo: widget.sitterId)
+          .where('userId', isEqualTo: currentUser.uid) // เพิ่มเงื่อนไขนี้
           .orderBy('timestamp', descending: true)
           .startAfterDocument(_lastDocument!)
           .limit(ReviewConstants.pageSize)
@@ -175,9 +184,13 @@ class _ReviewsPageState extends State<ReviewsPage> {
 
   Future<void> _calculateAverageRating() async {
     try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+
       final QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection(ReviewConstants.collectionName)
           .where('sitterId', isEqualTo: widget.sitterId)
+          .where('userId', isEqualTo: currentUser.uid) // เพิ่มเงื่อนไขนี้
           .get();
 
       if (snapshot.docs.isEmpty) {

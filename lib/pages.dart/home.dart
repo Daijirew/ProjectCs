@@ -19,27 +19,38 @@ class _MyWidgetState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.grey[100],
+        backgroundColor: Colors.grey[50],
         body: SafeArea(
           child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  _buildHeader(),
-                  const SizedBox(height: 30),
-                  Text('Cat', style: AppWidget.HeadlineTextFeildStyle()),
-                  Text('Pet take care', style: AppWidget.LightTextFeildStyle()),
-                  const SizedBox(height: 20),
-                  _buildQuickActions(),
-                  const SizedBox(height: 30),
-                  Text('Recent Customers',
-                      style: AppWidget.semiboldTextFeildStyle()),
-                  const SizedBox(height: 15),
-                  _buildCustomerCards(),
-                ],
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.orange.shade50, Colors.white],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    _buildHeader(),
+                    const SizedBox(height: 30),
+                    Text('Cat', style: AppWidget.HeadlineTextFeildStyle()),
+                    Text('Pet take care',
+                        style: AppWidget.LightTextFeildStyle()),
+                    const SizedBox(height: 20),
+                    _buildQuickActions(),
+                    const SizedBox(height: 30),
+                    Text('Recent Customers',
+                        style: AppWidget.semiboldTextFeildStyle()),
+                    const SizedBox(height: 15),
+                    _buildCustomerCards(),
+                    const SizedBox(height: 20),
+                  ],
+                ),
               ),
             ),
           ),
@@ -52,19 +63,22 @@ class _MyWidgetState extends State<Home> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Cat Sitter',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              )),
+          const Text(
+            'Cat Sitter',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: Colors.teal,
+                color: Colors.orange,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.teal.withOpacity(0.3),
+                    color: Colors.orange.withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   )
@@ -89,7 +103,7 @@ class _MyWidgetState extends State<Home> {
             context,
             MaterialPageRoute(builder: (context) => const CatHistoryPage()),
           );
-        }),
+        }, 'แมวของคุณ'),
         _buildActionItem('images/paw.png', paw, () {
           setState(() {
             paw = true;
@@ -100,11 +114,11 @@ class _MyWidgetState extends State<Home> {
             MaterialPageRoute(
               builder: (context) => const ReviewsPage(
                 itemId: 'booking_id',
-                sitterId: 'bezIZSK9zXOkKNocc6BTXPpxOg12',
+                sitterId: '/ sitters_id',
               ),
             ),
           );
-        }),
+        }, 'รีวิว'),
         _buildActionItem('images/backpack.png', backpack, () {
           setState(() {
             backpack = true;
@@ -117,7 +131,7 @@ class _MyWidgetState extends State<Home> {
                   SelectTargetDateScreen(onDateSelected: (selectedDate) {}),
             ),
           );
-        }),
+        }, 'จองบริการ'),
         _buildActionItem('images/ball.png', ball, () {
           setState(() {
             ball = true;
@@ -129,32 +143,51 @@ class _MyWidgetState extends State<Home> {
               builder: (context) => LocationMapPage(),
             ),
           );
-        }),
+        }, 'ตำแหน่ง'),
       ],
     );
   }
 
-  Widget _buildActionItem(String image, bool isSelected, VoidCallback onTap) {
+  Widget _buildActionItem(
+      String image, bool isSelected, VoidCallback onTap, String label) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-            color: isSelected ? Colors.teal : Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
-                blurRadius: 8,
-                offset: Offset(0, 3),
-              )
-            ]),
-        child: Image.asset(
-          image,
-          height: 45,
-          width: 45,
-          color: isSelected ? Colors.white : Colors.black,
-        ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.orange : Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                )
+              ],
+              border: Border.all(
+                color: isSelected ? Colors.orange : Colors.orange.shade100,
+                width: 1.5,
+              ),
+            ),
+            child: Image.asset(
+              image,
+              height: 45,
+              width: 45,
+              color: isSelected ? Colors.white : Colors.orange.shade700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isSelected ? Colors.orange.shade700 : Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -180,34 +213,75 @@ class _MyWidgetState extends State<Home> {
       },
       child: Container(
         width: 200,
-        padding: EdgeInsets.all(15),
+        padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.2),
-                blurRadius: 8,
-                offset: Offset(0, 3),
-              )
-            ]),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.orange.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            )
+          ],
+          border: Border.all(
+            color: Colors.orange.shade100,
+            width: 1,
+          ),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.asset(
-              'images/cat.png',
+            Container(
               height: 120,
-              width: 120,
-              fit: BoxFit.contain,
-              color: Colors.black,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Image.asset(
+                'images/cat.png',
+                height: 100,
+                width: 100,
+                fit: BoxFit.contain,
+                color: Colors.orange.shade700,
+              ),
             ),
             const SizedBox(height: 10),
-            Text('Pet of your customer house',
-                style: AppWidget.semiboldTextFeildStyle()),
+            Text(
+              'Pet of your customer house',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.orange.shade700,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 8),
-            Text(name, style: AppWidget.LightTextFeildStyle()),
+            Text(
+              name,
+              style: AppWidget.LightTextFeildStyle(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
             const SizedBox(height: 8),
-            Text('Total cat $cats', style: AppWidget.semiboldTextFeildStyle()),
+            Row(
+              children: [
+                Icon(
+                  Icons.pets,
+                  size: 16,
+                  color: Colors.orange.shade400,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Total cat $cats',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
