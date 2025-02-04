@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget {
         Locale('ar', 'TH'),
       ],
       debugShowCheckedModeBanner: false,
-      home: AdminPanel(),
+      home: LogIn(),
     );
   }
 }
