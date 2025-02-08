@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:myproject/pages.dart/sitterscreen/bookingService.dart';
 
 class BookingScreen extends StatefulWidget {
-  // พารามิเตอร์ที่จำเป็นสำหรับการจอง
   final String sitterId;
   final List<DateTime> selectedDates;
   final double pricePerDay;
@@ -21,10 +21,10 @@ class BookingScreen extends StatefulWidget {
 }
 
 class _BookingScreenState extends State<BookingScreen> {
-  // ตัวควบคุมและตัวแปรสถานะ
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance; // Add this line
   final TextEditingController _notesController = TextEditingController();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final BookingService _bookingService = BookingService();
   bool _isLoading = false;
 
   @override
@@ -35,55 +35,30 @@ class _BookingScreenState extends State<BookingScreen> {
 
   // ฟังก์ชันสำหรับการยืนยันการจอง
   Future<void> _confirmBooking() async {
-    // ตรวจสอบการล็อกอิน
-    if (_auth.currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('กรุณาเข้าสู่ระบบก่อนทำการจอง'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+    if (_isLoading) return;
 
     setState(() => _isLoading = true);
 
     try {
-      // ตรวจสอบว่าผู้รับเลี้ยงยังมีอยู่ในระบบ
-      final sitterDoc =
-          await _firestore.collection('users').doc(widget.sitterId).get();
-      if (!sitterDoc.exists) {
-        throw Exception('ไม่พบข้อมูลผู้รับเลี้ยง');
-      }
-
-      // ตรวจสอบว่าวันที่เลือกยังว่างอยู่
-      final isAvailable = await _checkDateAvailability();
-      if (!isAvailable) {
-        throw Exception('วันที่เลือกไม่ว่างแล้ว กรุณาเลือกวันใหม่');
-      }
-
-      // สร้างการจองใหม่
-      await _firestore.collection('bookings').add({
-        'userId': _auth.currentUser!.uid,
-        'sitterId': widget.sitterId,
-        'dates': widget.selectedDates
-            .map((date) => Timestamp.fromDate(date))
-            .toList(),
-        'totalPrice': widget.pricePerDay * widget.selectedDates.length,
-        'notes': _notesController.text.trim(),
-        'status': 'pending',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      // Using the BookingService to handle the transaction
+      final bookingId = await _bookingService.createBooking(
+        sitterId: widget.sitterId,
+        dates: widget.selectedDates,
+        totalPrice: widget.pricePerDay * widget.selectedDates.length,
+        notes: _notesController.text.trim(),
+      );
 
       if (!mounted) return;
 
-      // แสดงการจองสำเร็จและกลับไปหน้าแรก
-      Navigator.of(context).pop();
+      // Show success message and navigate back
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('จองสำเร็จ')),
       );
+      Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
+
+      // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString()),
@@ -133,141 +108,50 @@ class _BookingScreenState extends State<BookingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Confirm Booking'),
-        elevation: 0,
+        title: Text('Booking Details'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ส่วนแสดงรายละเอียดการจอง
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Booking Details',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildDetailRow('Sitter:', widget.sitterId),
-                    _buildDetailRow(
-                      'Selected Dates:',
-                      DateFormat('dd MMM yyyy').format(widget.selectedDates[0]),
-                    ),
-                    _buildDetailRow(
-                      'Number of Days:',
-                      '${widget.selectedDates.length} days',
-                    ),
-                    _buildDetailRow(
-                      'Price per Day:',
-                      '${widget.pricePerDay.toStringAsFixed(0)} Baht',
-                    ),
-                    const Divider(height: 32),
-                    _buildDetailRow(
-                      'Total Price:',
-                      '${(widget.pricePerDay * widget.selectedDates.length).toStringAsFixed(0)} Baht',
-                      isTotal: true,
-                    ),
-                  ],
-                ),
+            Text(
+              'Selected Dates:',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            SizedBox(height: 8),
+            // Display selected dates
+            ...widget.selectedDates.map(
+              (date) => Padding(
+                padding: EdgeInsets.only(bottom: 4),
+                child: Text(DateFormat('yyyy-MM-dd').format(date)),
               ),
             ),
-            const SizedBox(height: 16),
-            // ส่วนหมายเหตุถึงผู้รับเลี้ยง
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            SizedBox(height: 16),
+            Text(
+              'Price per Day: \$${widget.pricePerDay}',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            SizedBox(height: 16),
+            TextField(
+              controller: _notesController,
+              decoration: InputDecoration(
+                labelText: 'Additional Notes',
+                border: OutlineInputBorder(),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Note to Sitter',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _notesController,
-                      maxLines: 3,
-                      decoration: const InputDecoration(
-                        hintText:
-                            'Add additional information or special care instructions for your cat',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                ),
+              maxLines: 3,
+            ),
+            SizedBox(height: 24),
+            Center(
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _confirmBooking,
+                child: _isLoading
+                    ? CircularProgressIndicator()
+                    : Text('Confirm Booking'),
               ),
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _confirmBooking,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).primaryColor,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: _isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Text('Confirm Booking'),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // สร้างแถวแสดงรายละเอียด
-  Widget _buildDetailRow(String label, String value, {bool isTotal = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: isTotal ? 16 : 14,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: isTotal ? 16 : 14,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
       ),
     );
   }

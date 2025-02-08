@@ -39,7 +39,7 @@ dependencies:
   cupertino_icons: ^1.0.6
   curved_navigation_bar: ^1.0.6
   firebase_core: 
-  cloud_firestore: 
+  cloud_firestore:
   firebase_auth: 
   google_sign_in: 
   random_string: 
