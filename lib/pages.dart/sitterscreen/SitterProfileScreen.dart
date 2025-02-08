@@ -6,6 +6,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:myproject/page2.dart/showreviwe.dart';
 import 'package:myproject/pages.dart/reviwe.dart';
 import 'package:myproject/pages.dart/sitterscreen/bookingService.dart';
+import 'package:myproject/pages.dart/sitterscreen/bookscreen.dart';
 
 class SitterProfileScreen extends StatefulWidget {
   final String sitterId;
@@ -386,9 +387,9 @@ class _SitterProfileScreenState extends State<SitterProfileScreen> {
                   builder: (context) => BookingScreen(
                     sitterId: widget.sitterId,
                     selectedDates: widget.targetDates,
-                    sitterName: _sitterData!['name'],
+
                     pricePerDay: _sitterData!['pricePerDay'] ??
-                        300.0, // Add default price or get from sitter data
+                        35.0, // Add default price or get from sitter data
                   ),
                 ),
               );
