@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:myproject/Catpage.dart/cat_history.dart';
 import 'package:myproject/page2.dart/location/location.dart';
+import 'package:myproject/pages.dart/PrepareCatsForSittingPage.dart';
 import 'package:myproject/pages.dart/details.dart';
 import 'package:myproject/pages.dart/matching/matching.dart';
 import 'package:myproject/pages.dart/reviwe.dart';
@@ -194,12 +195,52 @@ class _MyWidgetState extends State<Home> {
 
   Widget _buildCustomerCards() {
     return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
+      child: Column(
         children: [
-          _buildCustomerCard('John Terry House', 5),
-          const SizedBox(width: 15),
-          _buildCustomerCard('Sarah Johnson House', 3),
+          // เพิ่มปุ่มเตรียมแมวสำหรับฝากเลี้ยง
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 16),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PrepareCatsForSittingPage(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.pets, color: Colors.white),
+              label: const Text(
+                'เตรียมแมวสำหรับฝากเลี้ยง',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                elevation: 3,
+              ),
+            ),
+          ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildCustomerCard('John Terry House', 5),
+                const SizedBox(width: 15),
+                _buildCustomerCard('Sarah Johnson House', 3),
+              ],
+            ),
+          ),
         ],
       ),
     );
