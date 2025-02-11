@@ -141,6 +141,7 @@ class _BookingScreenState extends State<BookingScreen> {
               ),
               maxLines: 3,
             ),
+
             SizedBox(height: 24),
             Center(
               child: ElevatedButton(
