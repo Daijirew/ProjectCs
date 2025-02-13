@@ -292,27 +292,69 @@ class _DetailPageState extends State<DetailPage> {
                         ),
                       ],
                     ),
+                    SizedBox(
+                      height: 30.0,
+                    ),
                     Row(
                       children: [
                         Container(
+                          width: 150,
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white),
+                            border: Border.all(color: Colors.white, width: 2.0),
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              Icon(Icons.add),
+                              Icon(
+                                Icons.add,
+                                color: Colors.white,
+                              ),
                               Text(
-                                "Add to Cart",
+                                "1",
                                 style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20.0,
+                                    color: Color(0xffeed51e),
+                                    fontSize: 30.0,
                                     fontWeight: FontWeight.bold),
-                              )
+                              ),
+                              Icon(
+                                Icons.remove,
+                                color: Colors.white,
+                              ),
                             ],
                           ),
-                        )
+                        ),
+                        SizedBox(
+                          width: 10.0,
+                        ),
+                        Container(
+                          width: 200,
+                          decoration: BoxDecoration(
+                              color: Color(0xffeed51e),
+                              borderRadius: BorderRadius.circular(10),
+                              border:
+                                  Border.all(color: Colors.white, width: 2.0)),
+                          child: Column(
+                            children: [
+                              Text(
+                                "Total : " "\$50",
+                                style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 18.0,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                              Text(
+                                "Book Now",
+                                style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 26.0,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),
