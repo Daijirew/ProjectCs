@@ -1,14 +1,28 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:intl/intl.dart';
 
 class DetailPage extends StatefulWidget {
-  const DetailPage({Key? key}) : super(key: key);
+  final String image, name, shortdetail, sitterdetail, price;
+  DetailPage({
+    required this.image,
+    required this.name,
+    required this.shortdetail,
+    required this.sitterdetail,
+    required this.price,
+  });
 
   @override
   State<DetailPage> createState() => _DetailPageState();
 }
 
 class _DetailPageState extends State<DetailPage> {
+  final String secretkey =
+      'your_stripe_secret_key'; // Define your secret key here
+  Map<String, dynamic>? paymentIntent; // Define the paymentIntent variable
+
   List<String> getFormattedDates() {
     final now = DateTime.now();
     final formatter = DateFormat('EEE d');
@@ -18,8 +32,14 @@ class _DetailPageState extends State<DetailPage> {
     });
   }
 
-  int track = 0;
+  int track = 0, quantity = 1, total = 0;
   bool eight = false, ten = false, six = false;
+
+  @override
+  void initState() {
+    super.initState();
+    total = int.parse(widget.price);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +49,7 @@ class _DetailPageState extends State<DetailPage> {
         child: Stack(
           children: [
             Image.asset(
-              "images/duck.jpg",
+              widget.image,
               height: MediaQuery.of(context).size.height / 2,
               width: MediaQuery.of(context).size.width,
               fit: BoxFit.cover,
@@ -68,14 +88,14 @@ class _DetailPageState extends State<DetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Cat",
+                      widget.name,
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 26.0,
                           fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      "Cat",
+                      widget.shortdetail,
                       style: TextStyle(
                           color: const Color.fromARGB(174, 255, 255, 255),
                           fontSize: 18.0,
@@ -85,7 +105,7 @@ class _DetailPageState extends State<DetailPage> {
                       height: 20.0,
                     ),
                     Text(
-                      "cat only birthday",
+                      widget.sitterdetail,
                       style: TextStyle(
                           color: const Color.fromARGB(174, 255, 255, 255),
                           fontSize: 18.0,
@@ -306,20 +326,36 @@ class _DetailPageState extends State<DetailPage> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              Icon(
-                                Icons.add,
-                                color: Colors.white,
+                              GestureDetector(
+                                onTap: () {
+                                  quantity = quantity + 1;
+                                  total = total + int.parse(widget.price);
+                                  setState(() {});
+                                },
+                                child: Icon(
+                                  Icons.add,
+                                  color: Colors.white,
+                                ),
                               ),
                               Text(
-                                "1",
+                                quantity.toString(),
                                 style: TextStyle(
                                     color: Color(0xffeed51e),
                                     fontSize: 30.0,
                                     fontWeight: FontWeight.bold),
                               ),
-                              Icon(
-                                Icons.remove,
-                                color: Colors.white,
+                              GestureDetector(
+                                onTap: () {
+                                  if (quantity > 1) {
+                                    quantity = quantity - 1;
+                                    total = total - int.parse(widget.price);
+                                    setState(() {});
+                                  }
+                                },
+                                child: Icon(
+                                  Icons.remove,
+                                  color: Colors.white,
+                                ),
                               ),
                             ],
                           ),
@@ -327,30 +363,35 @@ class _DetailPageState extends State<DetailPage> {
                         SizedBox(
                           width: 10.0,
                         ),
-                        Container(
-                          width: 200,
-                          decoration: BoxDecoration(
-                              color: Color(0xffeed51e),
-                              borderRadius: BorderRadius.circular(10),
-                              border:
-                                  Border.all(color: Colors.white, width: 2.0)),
-                          child: Column(
-                            children: [
-                              Text(
-                                "Total : " "\$50",
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 18.0,
-                                    fontWeight: FontWeight.w500),
-                              ),
-                              Text(
-                                "Book Now",
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 26.0,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ],
+                        GestureDetector(
+                          onTap: () {
+                            makePayment(total.toString());
+                          },
+                          child: Container(
+                            width: 200,
+                            decoration: BoxDecoration(
+                                color: Color(0xffeed51e),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                    color: Colors.white, width: 2.0)),
+                            child: Column(
+                              children: [
+                                Text(
+                                  "Total : " "\฿" + total.toString(),
+                                  style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 18.0,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                Text(
+                                  "Book Now",
+                                  style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 26.0,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -363,5 +404,86 @@ class _DetailPageState extends State<DetailPage> {
         ),
       ),
     );
+  }
+
+  Future<void> makePayment(String amount) async {
+    try {
+      paymentIntent = await createPaymentIntent(amount, 'Baht');
+      await Stripe.instance
+          .initPaymentSheet(
+              paymentSheetParameters: SetupPaymentSheetParameters(
+                  paymentIntentClientSecret: paymentIntent!['clientSecret'],
+                  style: ThemeMode.dark,
+                  merchantDisplayName: 'Theansin'))
+          .then((value) {});
+
+      displayPaymentSheet(amount);
+    } catch (e, s) {
+      print('exception$e$s');
+    }
+  }
+
+  displayPaymentSheet(String amount) async {
+    try {
+      await Stripe.instance.presentPaymentSheet().then((value) async {
+        showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                          ),
+                          SizedBox(width: 8),
+                          Text("Payment Successful"),
+                        ],
+                      )
+                    ],
+                  ),
+                ));
+        paymentIntent = null;
+      }).onError((error, stackTrace) {
+        print("Error is : ---> $error $stackTrace");
+      });
+    } on StripeException catch (e) {
+      print("Error is: ---> $e");
+      showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+                content: Text("Cancelled"),
+              ));
+    } catch (e) {
+      print("$e");
+    }
+  }
+
+  createPaymentIntent(String amount, String currency) async {
+    try {
+      Map<String, dynamic> body = {
+        'amount': calculateAmount(amount),
+        'currency': currency,
+        'payment_method_types[]': 'card'
+      };
+
+      var response = await http.post(
+          Uri.parse('https://api.stripe.com/v1/payment_intents'),
+          headers: {
+            'Authorization': 'Bearer $secretkey',
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: body);
+      return jsonDecode(response.body);
+    } catch (err) {
+      print('err charging user: ${err.toString()}');
+    }
+  }
+
+  int calculateAmount(String amount) {
+    final intAmount = (double.parse(amount) * 100).toInt();
+    return intAmount;
   }
 }

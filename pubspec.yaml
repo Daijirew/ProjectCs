@@ -57,6 +57,8 @@ dependencies:
   geocoding:
   calendar_date_picker2:
   flutter_local_notifications:
+  flutter_stripe:
+  http:
  
 
 
