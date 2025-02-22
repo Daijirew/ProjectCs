@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:myproject/page2.dart/SitterBookingRequestsScreen.dart';
 import 'package:myproject/page2.dart/_CatSearchPageState.dart';
 import 'package:myproject/page2.dart/location/location.dart';
 import 'package:myproject/page2.dart/showreviwe.dart';
@@ -129,7 +130,8 @@ class _Home2State extends State<Home2> {
           _updateTaskState(TaskType.cat);
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => CatSearchPage()),
+            MaterialPageRoute(
+                builder: (context) => SitterBookingRequestsScreen()),
           );
         }),
         _buildTaskItem('images/paw.png', 'Sitter', paw, () {

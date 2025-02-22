@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:myproject/pages.dart/BookingStatusScreen.dart';
 
 class BookingService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -140,7 +141,6 @@ class _BookingScreenState extends State<BookingScreen> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Card(
               child: Padding(
