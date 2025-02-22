@@ -22,6 +22,7 @@ class _DetailPageState extends State<DetailPage> {
   final String secretkey =
       'your_stripe_secret_key'; // Define your secret key here
   Map<String, dynamic>? paymentIntent; // Define the paymentIntent variable
+  String? currentdate;
 
   List<String> getFormattedDates() {
     final now = DateTime.now();
@@ -133,6 +134,7 @@ class _DetailPageState extends State<DetailPage> {
                             return GestureDetector(
                               onTap: () {
                                 track = index;
+                                currentdate = dates[index];
                                 setState(() {});
                               },
                               child: Container(
@@ -426,6 +428,19 @@ class _DetailPageState extends State<DetailPage> {
   displayPaymentSheet(String amount) async {
     try {
       await Stripe.instance.presentPaymentSheet().then((value) async {
+        Map<String, dynamic> userSitterCat = {
+          "name": widget.name,
+          "image": widget.image,
+          "Date": currentdate,
+          "Time": eight
+              ? "08:00 PM"
+              : ten
+                  ? "10:00 PM"
+                  : "06:00 PM",
+          "Quantity": quantity.toString(),
+          "Total": total.toString(),
+        };
+
         showDialog(
             context: context,
             builder: (_) => AlertDialog(

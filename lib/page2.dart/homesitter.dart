@@ -145,13 +145,7 @@ class _Home2State extends State<Home2> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => DetailPage(
-                image: "images/duck.jpg",
-                name: "ithean",
-                shortdetail: "23 years",
-                sitterdetail: "เคยรับเลี้ยงมาหลายงาน",
-                price: "30",
-              ),
+              builder: (context) => AvailableDatesPage(),
             ),
           );
         }),
