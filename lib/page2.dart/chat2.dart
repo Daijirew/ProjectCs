@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:myproject/page2.dart/chat2.dart';
 import 'package:myproject/pages.dart/chatpage.dart';
 import 'package:myproject/services/database.dart';
 import 'package:myproject/services/shared_pref.dart';
@@ -14,45 +15,50 @@ class Chat extends StatefulWidget {
 
 class _MyWidgetState extends State<Chat> {
   bool search = false;
-  String? myName, myProfilePic, myUserName, myEmail;
-  Stream? chatRoomsStream;
-
+  String? myName, myProfilePic, myUserName, myEmail, myRole;
+  Stream<QuerySnapshot>? chatRoomsStream;
   getthesharedpref() async {
     myName = await SharedPreferenceHelper().getDisplayName();
     myProfilePic = await SharedPreferenceHelper().getUserPic();
     myUserName = await SharedPreferenceHelper().getUserName();
     myEmail = await SharedPreferenceHelper().getUserEmail();
+    myRole = await SharedPreferenceHelper().getUserRole();
     setState(() {});
   }
 
   ontheload() async {
     await getthesharedpref();
-    chatRoomsStream = await DatabaseMethods().getChatRooms();
+    chatRoomsStream =
+        await DatabaseMethods().getChatRooms(myUserName!, myRole!);
     setState(() {});
   }
 
   Widget ChatRoomList() {
-    return StreamBuilder(
-        stream: chatRoomsStream,
-        builder: (context, AsyncSnapshot snapshot) {
-          return snapshot.hasData
-              ? ListView.builder(
-                  padding: EdgeInsets.zero,
-                  itemCount: snapshot.data.docs.length,
-                  shrinkWrap: true,
-                  itemBuilder: (context, index) {
-                    DocumentSnapshot ds = snapshot.data.docs[index];
-                    print(ds.id);
-                    return ChatRoomListTile(
-                        chatRoomId: ds.id,
-                        lastMessage: ds["lastMessage"],
-                        myUsername: myUserName!,
-                        time: ds["lastMessageSendTs"]);
-                  })
-              : Center(
-                  child: CircularProgressIndicator(),
-                );
-        });
+    return StreamBuilder<QuerySnapshot>(
+      stream: chatRoomsStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(child: Text("No Chat Rooms Found"));
+        }
+        return ListView.builder(
+          padding: EdgeInsets.zero,
+          itemCount: snapshot.data!.docs.length,
+          shrinkWrap: true,
+          itemBuilder: (context, index) {
+            DocumentSnapshot ds = snapshot.data!.docs[index];
+            return ChatRoomListTile(
+              chatRoomId: ds.id,
+              lastMessage: ds["lastMessage"],
+              myUsername: myUserName!,
+              timestamp: ds["lastMessageSendTs"],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -204,19 +210,50 @@ class _MyWidgetState extends State<Chat> {
       onTap: () async {
         search = false;
         setState(() {});
-        var chatRoomId = getChatRoomIdbyUsername(myUserName!, data['username']);
-        Map<String, dynamic> chatRoomInfoMap = {
-          "users": [myUserName, data['username']]
-        };
-        await DatabaseMethods().createChatRoom(chatRoomId, chatRoomInfoMap);
-        Navigator.push(
+
+        // ตรวจสอบว่าไม่ใช่การแชทกับตัวเอง
+        if (myUserName == data['username']) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Cannot chat with yourself')));
+          return;
+        }
+
+        try {
+          // สร้าง chatRoomId
+          var chatRoomId =
+              getChatRoomIdbyUsername(myUserName!, data['username']);
+
+          // สร้างข้อมูล chatRoom
+          Map<String, dynamic> chatRoomInfoMap = {
+            "users": [myUserName, data['username']],
+            "roles": {myUserName: myRole, data['username']: data['role']},
+            "time": FieldValue.serverTimestamp(),
+            "lastMessage": "",
+            "lastMessageSendTs": "",
+            "sitterId":
+                data['role'] == 'sitter' ? data['username'] : myUserName,
+            "userId": data['role'] == 'user' ? data['username'] : myUserName,
+          };
+
+          // สร้างหรืออัพเดท chatRoom
+          await DatabaseMethods().createChatRoom(chatRoomId, chatRoomInfoMap);
+
+          // นำทางไปยังหน้าแชท
+          Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => ChatPage(
-                      name: data['name'],
-                      profileurl: data['photo'],
-                      username: data['username'],
-                    )));
+              builder: (context) => ChatPage(
+                name: data['name'],
+                profileurl: data['photo'],
+                username: data['username'],
+                role: data['role'],
+              ),
+            ),
+          );
+        } catch (e) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Error creating chat: $e')));
+        }
       },
       child: Container(
         margin: EdgeInsets.symmetric(vertical: 8),
@@ -231,37 +268,71 @@ class _MyWidgetState extends State<Chat> {
             ),
             child: Row(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(60),
-                  child: Image.network(
-                    data['photo'],
-                    height: 50,
-                    width: 50,
-                    fit: BoxFit.cover,
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(25),
+                    border: Border.all(
+                      color: Colors.grey.shade200,
+                      width: 1,
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(25),
+                    child: data['photo'] != null && data['photo'].isNotEmpty
+                        ? Image.network(
+                            data['photo'],
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(Icons.person, color: Colors.grey);
+                            },
+                          )
+                        : Icon(Icons.person, color: Colors.grey),
                   ),
                 ),
-                SizedBox(
-                  width: 15,
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      data["name"],
-                      style: TextStyle(
+                SizedBox(width: 15),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        data["name"] ?? "Unknown",
+                        style: TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.bold,
-                          fontSize: 18.0),
-                    ),
-                    SizedBox(
-                      width: 10,
-                    ),
-                    Text(data['username'],
+                          fontSize: 16,
+                        ),
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        data['username'] ?? "",
                         style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500)),
-                  ],
+                          color: Colors.black54,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: data['role'] == 'sitter'
+                        ? Colors.blue.withOpacity(0.1)
+                        : Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    (data['role'] ?? "").toUpperCase(),
+                    style: TextStyle(
+                      color: data['role'] == 'sitter'
+                          ? Colors.blue[700]
+                          : Colors.green[700],
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -273,35 +344,51 @@ class _MyWidgetState extends State<Chat> {
 }
 
 class ChatRoomListTile extends StatefulWidget {
-  final String lastMessage, chatRoomId, myUsername, time;
-  ChatRoomListTile(
-      {required this.chatRoomId,
-      required this.lastMessage,
-      required this.myUsername,
-      required this.time});
+  final String chatRoomId;
+  final String myUsername;
+  final String lastMessage;
+  final String timestamp;
+
+  const ChatRoomListTile({
+    Key? key,
+    required this.chatRoomId,
+    required this.myUsername,
+    required this.lastMessage,
+    required this.timestamp,
+  }) : super(key: key);
 
   @override
   State<ChatRoomListTile> createState() => _ChatRoomListState();
 }
 
 class _ChatRoomListState extends State<ChatRoomListTile> {
-  String profilePicUrl = "", name = "", username = "", id = "";
+  String profilePicUrl = "", name = "", username = "", role = "";
+
   getthisUserInfo() async {
     username =
         widget.chatRoomId.replaceAll("_", '').replaceAll(widget.myUsername, "");
 
     QuerySnapshot querySnapshot =
         await DatabaseMethods().getUserInfo(username.toUpperCase());
-    name = '${querySnapshot.docs[0]['name']}';
-    profilePicUrl = '${querySnapshot.docs[0]['photo']}';
-    id = '${querySnapshot.docs[0]['email']}';
-    setState(() {});
+    if (querySnapshot.docs.isNotEmpty) {
+      final userData = querySnapshot.docs[0].data() as Map<String, dynamic>;
+      setState(() {
+        name = userData['name'] ?? '';
+        profilePicUrl = userData['photo'] ?? '';
+        role = userData['role'] ?? '';
+      });
+    }
   }
 
   @override
   void initState() {
     getthisUserInfo();
     super.initState();
+  }
+
+  String getTimeDisplay(String timestamp) {
+    // Add logic to format time display if needed
+    return timestamp;
   }
 
   @override
@@ -312,66 +399,112 @@ class _ChatRoomListState extends State<ChatRoomListTile> {
             context,
             MaterialPageRoute(
                 builder: (context) => ChatPage(
-                    name: name,
-                    profileurl: profilePicUrl,
-                    username: username)));
+                      name: name,
+                      profileurl: profilePicUrl,
+                      username: username,
+                      role: role,
+                    )));
       },
       child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        margin: EdgeInsets.symmetric(vertical: 8),
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 3,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            profilePicUrl == ''
-                ? CircularProgressIndicator()
-                : ClipRRect(
-                    borderRadius: BorderRadius.circular(60),
-                    child: Image.network(
-                      profilePicUrl,
-                      height: 70,
-                      width: 70,
-                      fit: BoxFit.cover,
+            // Profile Picture
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.grey[200],
+              ),
+              child: profilePicUrl.isEmpty
+                  ? Center(child: CircularProgressIndicator())
+                  : ClipRRect(
+                      borderRadius: BorderRadius.circular(30),
+                      child: Image.network(
+                        profilePicUrl,
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                  ),
-            SizedBox(
-              width: 20,
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  height: 10,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      username,
-                      style: AppWidget.boldTextFeildStyle(),
-                    ),
-                  ],
-                ),
-                Container(
-                  width: MediaQuery.of(context).size.width / 3,
-                  child: Text(
-                    widget.lastMessage,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                        color: Colors.black38,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Poppins'),
+            SizedBox(width: 15),
+            // Chat Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        name.isNotEmpty ? name : 'Loading...',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        getTimeDisplay(widget.timestamp),
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            Spacer(),
-            Text(
-              widget.time,
-              style: TextStyle(
-                  color: Colors.black45,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Poppins'),
+                  SizedBox(height: 5),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.lastMessage,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      if (role.isNotEmpty)
+                        Container(
+                          margin: EdgeInsets.only(left: 8),
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: role == 'sitter'
+                                ? Colors.blue.withOpacity(0.1)
+                                : Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            role.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: role == 'sitter'
+                                  ? Colors.blue[700]
+                                  : Colors.green[700],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
