@@ -1,13 +1,16 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+<<<<<<< HEAD
 import 'package:intl/intl.dart';
 import 'package:myproject/pages.dart/BookingStatusScreen.dart';
+=======
+>>>>>>> ad066d652e6b779175cd1227cecb0f9ebe9c1043
 
 class BookingService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  // Create a new booking with proper availability checking
   Future<String> createBooking({
     required String sitterId,
     required List<DateTime> dates,
@@ -15,40 +18,65 @@ class BookingService {
     String? notes,
   }) async {
     try {
+      // Check authentication
       final currentUser = _auth.currentUser;
       if (currentUser == null) {
-        throw Exception('Please login before making a booking');
+        throw Exception('กรุณาเข้าสู่ระบบก่อนทำการจอง');
       }
 
-      // Create the booking document
-      DocumentReference bookingRef =
-          await _firestore.collection('bookings').add({
-        'userId': currentUser.uid,
-        'sitterId': sitterId,
-        'dates': dates.map((date) => Timestamp.fromDate(date)).toList(),
-        'status': 'pending',
-        'totalPrice': totalPrice,
-        'notes': notes,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      // Run all checks in a transaction to ensure data consistency
+      return await _firestore.runTransaction<String>((transaction) async {
+        // Check if sitter exists
+        final sitterDoc =
+            await transaction.get(_firestore.collection('users').doc(sitterId));
 
-      return bookingRef.id;
+        if (!sitterDoc.exists) {
+          throw Exception('ไม่พบผู้รับเลี้ยงที่เลือก');
+        }
+
+        // Check sitter's availability for selected dates
+        final available = await _checkSitterAvailability(
+          transaction,
+          sitterId,
+          dates,
+        );
+
+        if (!available) {
+          throw Exception('วันที่เลือกไม่ว่างแล้ว กรุณาเลือกใหม่');
+        }
+
+        // Create the booking document
+        final bookingRef = _firestore.collection('bookings').doc();
+
+        transaction.set(bookingRef, {
+          'userId': currentUser.uid,
+          'sitterId': sitterId,
+          'dates': dates.map((date) => Timestamp.fromDate(date)).toList(),
+          'status': 'pending',
+          'totalPrice': totalPrice,
+          'notes': notes,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+
+        // Update sitter's availability
+        final availableDates =
+            (sitterDoc.data()?['availableDates'] ?? []) as List<dynamic>;
+        final updatedDates = availableDates.where((timestamp) {
+          final date = (timestamp as Timestamp).toDate();
+          return !dates.any((selectedDate) => _isSameDay(date, selectedDate));
+        }).toList();
+
+        transaction
+            .update(sitterDoc.reference, {'availableDates': updatedDates});
+
+        return bookingRef.id;
+      });
     } catch (e) {
-      throw Exception('Unable to create booking: $e');
+      throw Exception(e.toString());
     }
   }
-
-  Future<void> updateBookingStatus(String bookingId, String status) async {
-    try {
-      await _firestore.collection('bookings').doc(bookingId).update({
-        'status': status,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      throw Exception('Unable to update booking status: $e');
-    }
-  }
+<<<<<<< HEAD
 }
 
 class BookingScreen extends StatefulWidget {
@@ -378,5 +406,57 @@ class MyBookingsScreen extends StatelessWidget {
     }
 
     return Icon(iconData, color: color);
+=======
+
+  // Enhanced availability checking within transaction
+  Future<bool> _checkSitterAvailability(
+    Transaction transaction,
+    String sitterId,
+    List<DateTime> dates,
+  ) async {
+    // Get existing bookings for these dates
+    final existingBookings = await _firestore
+        .collection('bookings')
+        .where('sitterId', isEqualTo: sitterId)
+        .where('status', whereIn: ['pending', 'confirmed']).get();
+
+    // Check for date conflicts
+    for (var booking in existingBookings.docs) {
+      List<Timestamp> bookedDates = List<Timestamp>.from(booking['dates']);
+      for (var bookedDate in bookedDates) {
+        if (dates.any((date) => _isSameDay(date, bookedDate.toDate()))) {
+          return false;
+        }
+      }
+    }
+
+    // Get sitter's available dates
+    final sitterDoc = await _firestore.collection('users').doc(sitterId).get();
+    if (!sitterDoc.exists) return false;
+
+    final sitterData = sitterDoc.data();
+    if (sitterData == null || !sitterData.containsKey('availableDates')) {
+      return false;
+    }
+
+    List<Timestamp> availableDates =
+        List<Timestamp>.from(sitterData['availableDates']);
+    Set<String> availableDateStrings = availableDates
+        .map((timestamp) => _formatDateForComparison(timestamp.toDate()))
+        .toSet();
+
+    return dates.every((date) =>
+        availableDateStrings.contains(_formatDateForComparison(date)));
+  }
+
+  bool _isSameDay(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
+  }
+
+  String _formatDateForComparison(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+>>>>>>> ad066d652e6b779175cd1227cecb0f9ebe9c1043
   }
 }

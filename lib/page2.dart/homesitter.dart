@@ -5,6 +5,7 @@ import 'package:myproject/page2.dart/_CatSearchPageState.dart';
 import 'package:myproject/page2.dart/location/location.dart';
 import 'package:myproject/page2.dart/showreviwe.dart';
 import 'package:myproject/page2.dart/workdate/workdate.dart';
+import 'package:myproject/pages.dart/booking/detail_page.dart';
 import 'package:myproject/pages.dart/details.dart';
 import 'package:myproject/pages.dart/matching/matching.dart';
 
