@@ -2,10 +2,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:myproject/services/shared_pref.dart';
 
 class DatabaseMethods {
+  UpdateUserwallet(String id, String amount) async {
+    return await FirebaseFirestore.instance.collection("users").doc(id).update({
+      "wallet": amount,
+    });
+  }
+
   Future<void> addUserInfo(Map<String, dynamic> userInfoMap) async {
     return FirebaseFirestore.instance
         .collection('users')
-        .doc(userInfoMap['uid'])
+        .doc(userInfoMap['id'])
         .set(userInfoMap);
   }
 
@@ -34,11 +40,15 @@ class DatabaseMethods {
     return await FirebaseFirestore.instance
         .collection("users")
         .where("SearchKey", isEqualTo: username.substring(0, 1).toUpperCase())
-        .get();
+        .where("role", whereIn: ["user", "sitter"]).get();
   }
 
   createChatRoom(
       String chatRoomId, Map<String, dynamic> chatRoomInfoMap) async {
+    chatRoomInfoMap['userIds'] = [
+      chatRoomInfoMap['users'][0],
+      chatRoomInfoMap['users'][1]
+    ];
     final snapshot = await FirebaseFirestore.instance
         .collection("chatrooms")
         .doc(chatRoomId)
@@ -87,13 +97,12 @@ class DatabaseMethods {
         .get();
   }
 
-  Future<Stream<QuerySnapshot>> getChatRooms() async {
-    String? myUsername = await SharedPreferenceHelper().getUserName();
-    print(myUsername);
+  Future<Stream<QuerySnapshot>> getChatRooms(
+      String myUsername, String myRole) async {
     return FirebaseFirestore.instance
         .collection("chatrooms")
         .orderBy("time", descending: true)
-        .where("users", arrayContains: myUsername!)
+        .where("users", arrayContains: myUsername)
         .snapshots();
   }
 }

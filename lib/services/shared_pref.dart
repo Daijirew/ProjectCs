@@ -7,6 +7,7 @@ class SharedPreferenceHelper {
   static String userPicKey = 'USERPICKEY';
   static String displaynameKey = 'USERDISPLAYNAME';
   static String roleKey = 'USERROLEKEY'; // Added missing role key
+  static String userWalletKey = 'USERWALLETKEY';
 
   // Save user data to SharedPreferences
   Future<bool> saveUserId(String getUserId) async {
@@ -80,4 +81,8 @@ class SharedPreferenceHelper {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return await prefs.clear(); // Clear all data
   }
+
+  saveUserWallet(String string) {}
+
+  getUserWallet() {}
 }
