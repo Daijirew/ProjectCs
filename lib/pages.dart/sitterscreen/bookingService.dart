@@ -1,10 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-<<<<<<< HEAD
 import 'package:intl/intl.dart';
 import 'package:myproject/pages.dart/BookingStatusScreen.dart';
-=======
->>>>>>> ad066d652e6b779175cd1227cecb0f9ebe9c1043
+
 
 class BookingService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -76,7 +74,7 @@ class BookingService {
       throw Exception(e.toString());
     }
   }
-<<<<<<< HEAD
+
 }
 
 class BookingScreen extends StatefulWidget {
@@ -406,7 +404,8 @@ class MyBookingsScreen extends StatelessWidget {
     }
 
     return Icon(iconData, color: color);
-=======
+  }
+} 
 
   // Enhanced availability checking within transaction
   Future<bool> _checkSitterAvailability(
@@ -457,6 +456,5 @@ class MyBookingsScreen extends StatelessWidget {
 
   String _formatDateForComparison(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
->>>>>>> ad066d652e6b779175cd1227cecb0f9ebe9c1043
   }
 }
