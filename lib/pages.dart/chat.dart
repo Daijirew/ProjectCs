@@ -79,32 +79,54 @@ class _MyWidgetState extends State<Chat> {
   var tempSearchStore = [];
 
   initiateSearch(value) {
+    print("กำลังค้นหา: $value");
+
     if (value.length == 0) {
       setState(() {
         queryResultSet = [];
         tempSearchStore = [];
       });
+      return;
     }
+
     setState(() {
       search = true;
     });
-    var capitalizedValue =
-        value.substring(0, 1).toUpperCase() + value.substring(1);
+
     if (queryResultSet.isEmpty && value.length == 1) {
+      print("เริ่มค้นหาใน Firestore...");
       DatabaseMethods().Search(value).then((QuerySnapshot docs) {
-        for (int i = 0; i < docs.docs.length; ++i) {
-          queryResultSet.add(docs.docs[i].data());
+        print("ผลลัพธ์จาก Firestore: ${docs.docs.length} รายการ");
+
+        if (docs.docs.isNotEmpty) {
+          for (int i = 0; i < docs.docs.length; ++i) {
+            queryResultSet.add(docs.docs[i].data());
+            print("พบข้อมูล: ${docs.docs[i].data()}");
+          }
+
+          setState(() {
+            tempSearchStore = List.from(queryResultSet);
+          });
         }
+      }).catchError((error) {
+        print("เกิดข้อผิดพลาดในการค้นหา: $error");
       });
     } else {
+      print(
+          "กำลังกรองข้อมูลจาก queryResultSet (${queryResultSet.length} รายการ)");
       tempSearchStore = [];
       queryResultSet.forEach((element) {
-        if (element['username'].startsWith(capitalizedValue)) {
+        if (element['username']
+            .toString()
+            .toUpperCase()
+            .contains(value.toUpperCase())) {
+          print("พบที่ตรงกัน: ${element['username']}");
           setState(() {
             tempSearchStore.add(element);
           });
         }
       });
+      print("ผลลัพธ์หลังกรอง: ${tempSearchStore.length} รายการ");
     }
   }
 
@@ -195,9 +217,11 @@ class _MyWidgetState extends State<Chat> {
                         padding: EdgeInsets.only(left: 10.0, right: 10.0),
                         primary: false,
                         shrinkWrap: true,
-                        children: tempSearchStore.map((element) {
-                          return buildResultCard(element);
-                        }).toList())
+                        children: tempSearchStore.isEmpty
+                            ? [Center(child: Text('ไม่พบผลลัพธ์'))]
+                            : tempSearchStore.map((element) {
+                                return buildResultCard(element);
+                              }).toList())
                     : ChatRoomList(),
               ],
             ),

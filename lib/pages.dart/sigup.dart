@@ -32,7 +32,7 @@ class _SignUpState extends State<SignUp> {
                 email: emailController.text.trim(),
                 password: passwordController.text.trim());
 
-        String uid = userCredential.user!.uid; // UID ของผู้ใช้
+        String uid = userCredential.user!.uid; // ID ของผู้ใช้
 
         // เก็บข้อมูลใน Firestore
         Map<String, dynamic> userInfoMap = {
@@ -40,7 +40,7 @@ class _SignUpState extends State<SignUp> {
           'email': emailController.text.trim(),
           'username': nameController.text.trim(),
           'photo': 'images/User.png', // รูปโปรไฟล์เริ่มต้น
-          'uid': uid,
+          'id': uid,
           'role': role, // บทบาท (user หรือ sitter)
         };
 

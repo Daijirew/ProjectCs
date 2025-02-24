@@ -2,8 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:myproject/services/shared_pref.dart';
 
 class DatabaseMethods {
-  UpdateUserwallet(String id, String amount) async {
-    return await FirebaseFirestore.instance.collection("users").doc(id).update({
+  UpdateUserwallet(String uid, String amount) async {
+    return await FirebaseFirestore.instance
+        .collection("users")
+        .doc(uid)
+        .update({
       "wallet": amount,
     });
   }
@@ -11,7 +14,7 @@ class DatabaseMethods {
   Future<void> addUserInfo(Map<String, dynamic> userInfoMap) async {
     return FirebaseFirestore.instance
         .collection('users')
-        .doc(userInfoMap['id'])
+        .doc(userInfoMap['uid'])
         .set(userInfoMap);
   }
 
@@ -22,10 +25,10 @@ class DatabaseMethods {
         .set(userInfoMap);
   }
 
-  Future addUserDetails(Map<String, dynamic> userInfoMap, String id) async {
+  Future addUserDetails(Map<String, dynamic> userInfoMap, String uid) async {
     return await FirebaseFirestore.instance
         .collection("users")
-        .doc(id)
+        .doc(uid)
         .set(userInfoMap);
   }
 

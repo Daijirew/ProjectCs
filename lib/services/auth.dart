@@ -78,9 +78,9 @@ class DatabaseMethods {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // ฟังก์ชันสำหรับการเพิ่มข้อมูลผู้ใช้ลงใน Firestore
-  Future<void> addUser(String uid, Map<String, dynamic> userInfo) async {
+  Future<void> addUser(String id, Map<String, dynamic> userInfo) async {
     try {
-      await _firestore.collection('users').doc(uid).set(userInfo);
+      await _firestore.collection('users').doc(id).set(userInfo);
     } catch (e) {
       print("Error adding user: $e");
     }
