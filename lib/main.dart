@@ -3,7 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:myproject/Admin.dart/AdminPage.dart';
 import 'package:myproject/Catpage.dart/CatDetailsPage.dart';
 import 'package:myproject/Catpage.dart/CatRegistrationPage.dart';
 import 'package:myproject/page2.dart/homesitter.dart';
@@ -15,14 +15,11 @@ import 'package:myproject/pages.dart/login.dart';
 import 'package:myproject/pages.dart/onboard.dart';
 import 'package:myproject/pages.dart/sigup.dart';
 import 'package:myproject/services/auth.dart';
-import 'package:myproject/utils/user_fix.dart';
-import 'package:myproject/widget/app_constant.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Stripe.publishableKey = publishableKey;
   await Firebase.initializeApp();
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -30,8 +27,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      localizationsDelegates: [
+    return const MaterialApp(
+      localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
@@ -41,12 +38,6 @@ class MyApp extends StatelessWidget {
         Locale('ar', 'TH'),
       ],
       debugShowCheckedModeBanner: false,
-      builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-          child: child!,
-        );
-      },
       home: LogIn(),
     );
   }

@@ -1,10 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-import 'package:myproject/page2.dart/BookingAcceptancePage.dart';
-=======
 import 'package:myproject/page2.dart/SitterBookingRequestsScreen.dart';
->>>>>>> f8587211d436ffd11f87149abdc0e063bc321933
 import 'package:myproject/page2.dart/_CatSearchPageState.dart';
 import 'package:myproject/page2.dart/location/location.dart';
 import 'package:myproject/page2.dart/showreviwe.dart';
@@ -135,12 +131,8 @@ class _Home2State extends State<Home2> {
           _updateTaskState(TaskType.cat);
           Navigator.push(
             context,
-<<<<<<< HEAD
-            MaterialPageRoute(builder: (context) => BookingAcceptancePage()),
-=======
             MaterialPageRoute(
                 builder: (context) => SitterBookingRequestsScreen()),
->>>>>>> f8587211d436ffd11f87149abdc0e063bc321933
           );
         }),
         _buildTaskItem('images/paw.png', 'Sitter', paw, () {
