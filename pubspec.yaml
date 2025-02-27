@@ -59,11 +59,9 @@ dependencies:
   flutter_local_notifications:
   flutter_stripe:
   http:
-<<<<<<< HEAD
   table_calendar:
+  fl_chart: ^0.63.0
   
-=======
->>>>>>> f8587211d436ffd11f87149abdc0e063bc321933
  
 
 
