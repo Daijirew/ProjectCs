@@ -27,17 +27,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp( 
+    return const MaterialApp(
       localizationsDelegates: const [
-
-        GlobalMaterialLocalizations
-        .delegate,
-
-        GlobalWidgetsLocalizations
-        .delegate,
-
-        GlobalCupertinoLocalizations
-        .delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [
         Locale('en', 'US'),
