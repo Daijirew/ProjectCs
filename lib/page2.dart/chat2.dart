@@ -79,33 +79,34 @@ class _MyWidgetState extends State<Chat> {
   var tempSearchStore = [];
 
   initiateSearch(value) {
+    print("กำลังค้นหา: $value");
+
     if (value.length == 0) {
       setState(() {
         queryResultSet = [];
         tempSearchStore = [];
       });
+      return;
     }
+
     setState(() {
       search = true;
     });
-    var capitalizedValue =
-        value.substring(0, 1).toUpperCase() + value.substring(1);
-    if (queryResultSet.isEmpty && value.length == 1) {
-      DatabaseMethods().Search(value).then((QuerySnapshot docs) {
-        for (int i = 0; i < docs.docs.length; ++i) {
-          queryResultSet.add(docs.docs[i].data());
-        }
+
+    DatabaseMethods().Search(value).then((QuerySnapshot docs) {
+      print("ผลลัพธ์จาก Firestore: ${docs.docs.length} รายการ");
+
+      setState(() {
+        queryResultSet = docs.docs.map((doc) => doc.data()).toList();
+        tempSearchStore = List.from(queryResultSet);
       });
-    } else {
-      tempSearchStore = [];
-      queryResultSet.forEach((element) {
-        if (element['username'].startsWith(capitalizedValue)) {
-          setState(() {
-            tempSearchStore.add(element);
-          });
-        }
-      });
-    }
+
+      if (tempSearchStore.isEmpty) {
+        print("ไม่พบผลลัพธ์การค้นหา");
+      }
+    }).catchError((error) {
+      print("เกิดข้อผิดพลาดในการค้นหา: $error");
+    });
   }
 
   @override

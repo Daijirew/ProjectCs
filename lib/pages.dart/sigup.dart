@@ -34,14 +34,15 @@ class _SignUpState extends State<SignUp> {
 
         String uid = userCredential.user!.uid; // ID ของผู้ใช้
 
-        // เก็บข้อมูลใน Firestore
+        // ใน lib/pages.dart/sigup.dart หรือที่ที่มีการสร้างผู้ใช้ใหม่
         Map<String, dynamic> userInfoMap = {
           'name': nameController.text.trim(),
           'email': emailController.text.trim(),
           'username': nameController.text.trim(),
-          'photo': 'images/User.png', // รูปโปรไฟล์เริ่มต้น
+          'photo': 'images/User.png',
           'id': uid,
-          'role': role, // บทบาท (user หรือ sitter)
+          'role': role,
+          'SearchKey': nameController.text.substring(0, 1).toUpperCase(),
         };
 
         await FirebaseFirestore.instance

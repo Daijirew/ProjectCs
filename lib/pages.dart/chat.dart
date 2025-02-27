@@ -81,7 +81,7 @@ class _MyWidgetState extends State<Chat> {
   initiateSearch(value) {
     print("กำลังค้นหา: $value");
 
-    if (value.length == 0) {
+    if (value.isEmpty) {
       setState(() {
         queryResultSet = [];
         tempSearchStore = [];
@@ -93,41 +93,32 @@ class _MyWidgetState extends State<Chat> {
       search = true;
     });
 
-    if (queryResultSet.isEmpty && value.length == 1) {
-      print("เริ่มค้นหาใน Firestore...");
-      DatabaseMethods().Search(value).then((QuerySnapshot docs) {
-        print("ผลลัพธ์จาก Firestore: ${docs.docs.length} รายการ");
+    // ลองทั้งแบบตัวพิมพ์ใหญ่ และตัวพิมพ์เล็ก
+    DatabaseMethods().Search(value).then((QuerySnapshot docs) {
+      print("ผลลัพธ์จาก Firestore: ${docs.docs.length} รายการ");
 
-        if (docs.docs.isNotEmpty) {
-          for (int i = 0; i < docs.docs.length; ++i) {
-            queryResultSet.add(docs.docs[i].data());
-            print("พบข้อมูล: ${docs.docs[i].data()}");
+      if (docs.docs.isNotEmpty) {
+        setState(() {
+          queryResultSet = [];
+          for (var doc in docs.docs) {
+            queryResultSet.add(doc.data() as Map<String, dynamic>);
+            print("พบข้อมูล: ${doc.data()}");
           }
-
-          setState(() {
-            tempSearchStore = List.from(queryResultSet);
-          });
-        }
-      }).catchError((error) {
-        print("เกิดข้อผิดพลาดในการค้นหา: $error");
-      });
-    } else {
-      print(
-          "กำลังกรองข้อมูลจาก queryResultSet (${queryResultSet.length} รายการ)");
-      tempSearchStore = [];
-      queryResultSet.forEach((element) {
-        if (element['username']
-            .toString()
-            .toUpperCase()
-            .contains(value.toUpperCase())) {
-          print("พบที่ตรงกัน: ${element['username']}");
-          setState(() {
-            tempSearchStore.add(element);
-          });
-        }
-      });
-      print("ผลลัพธ์หลังกรอง: ${tempSearchStore.length} รายการ");
-    }
+          tempSearchStore = List.from(queryResultSet);
+        });
+      } else {
+        // ลองดูว่าคอลเลกชันมีข้อมูลทั้งหมดกี่รายการ
+        FirebaseFirestore.instance.collection("users").get().then((allDocs) {
+          print("จำนวนผู้ใช้ทั้งหมดในระบบ: ${allDocs.docs.length}");
+          for (var doc in allDocs.docs.take(5)) {
+            // แสดงตัวอย่าง 5 รายการแรก
+            print("ตัวอย่างข้อมูลผู้ใช้: ${doc.data()}");
+          }
+        });
+      }
+    }).catchError((error) {
+      print("เกิดข้อผิดพลาดในการค้นหา: $error");
+    });
   }
 
   @override
@@ -212,6 +203,7 @@ class _MyWidgetState extends State<Chat> {
             ),
             child: Column(
               children: [
+                // ในส่วนแสดงผลใน lib/pages.dart/chat.dart
                 search
                     ? ListView(
                         padding: EdgeInsets.only(left: 10.0, right: 10.0),
