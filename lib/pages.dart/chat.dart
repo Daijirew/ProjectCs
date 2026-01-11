@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:myproject/page2.dart/chat2.dart';
 import 'package:myproject/pages.dart/chatpage.dart';
+import 'package:myproject/pages.dart/todayscreen.dart';
 import 'package:myproject/services/database.dart';
 import 'package:myproject/services/shared_pref.dart';
 import 'package:myproject/widget/widget_support.dart';
@@ -14,45 +16,84 @@ class Chat extends StatefulWidget {
 
 class _MyWidgetState extends State<Chat> {
   bool search = false;
-  String? myName, myProfilePic, myUserName, myEmail;
-  Stream? chatRoomsStream;
+  String? myName, myProfilePic, myUserName, myEmail, myRole;
+  Stream<QuerySnapshot>? chatRoomsStream;
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
 
   getthesharedpref() async {
     myName = await SharedPreferenceHelper().getDisplayName();
     myProfilePic = await SharedPreferenceHelper().getUserPic();
     myUserName = await SharedPreferenceHelper().getUserName();
     myEmail = await SharedPreferenceHelper().getUserEmail();
+    myRole = await SharedPreferenceHelper().getUserRole();
     setState(() {});
   }
 
   ontheload() async {
     await getthesharedpref();
-    chatRoomsStream = await DatabaseMethods().getChatRooms();
+    chatRoomsStream =
+        await DatabaseMethods().getChatRooms(myUserName!, myRole!);
     setState(() {});
   }
 
   Widget ChatRoomList() {
-    return StreamBuilder(
-        stream: chatRoomsStream,
-        builder: (context, AsyncSnapshot snapshot) {
-          return snapshot.hasData
-              ? ListView.builder(
-                  padding: EdgeInsets.zero,
-                  itemCount: snapshot.data.docs.length,
-                  shrinkWrap: true,
-                  itemBuilder: (context, index) {
-                    DocumentSnapshot ds = snapshot.data.docs[index];
-                    print(ds.id);
-                    return ChatRoomListTile(
-                        chatRoomId: ds.id,
-                        lastMessage: ds["lastMessage"],
-                        myUsername: myUserName!,
-                        time: ds["lastMessageSendTs"]);
-                  })
-              : Center(
-                  child: CircularProgressIndicator(),
-                );
-        });
+    return StreamBuilder<QuerySnapshot>(
+      stream: chatRoomsStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+              child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+          ));
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.chat_bubble_outline,
+                  size: 80,
+                  color: Colors.grey[400],
+                ),
+                SizedBox(height: 16),
+                Text(
+                  "ไม่พบการสนทนา",
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  "ค้นหาผู้รับเลี้ยงเพื่อเริ่มการสนทนา",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return ListView.builder(
+          padding: EdgeInsets.zero,
+          itemCount: snapshot.data!.docs.length,
+          shrinkWrap: true,
+          itemBuilder: (context, index) {
+            DocumentSnapshot ds = snapshot.data!.docs[index];
+            return ChatRoomListTile(
+              chatRoomId: ds.id,
+              lastMessage: ds["lastMessage"],
+              myUsername: myUserName!,
+              timestamp: ds["lastMessageSendTs"],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -73,198 +114,326 @@ class _MyWidgetState extends State<Chat> {
   var tempSearchStore = [];
 
   initiateSearch(value) {
-    if (value.length == 0) {
+    setState(() {
+      _isSearching = true;
+    });
+
+    if (value.isEmpty) {
       setState(() {
         queryResultSet = [];
         tempSearchStore = [];
+        _isSearching = false;
       });
+      return;
     }
-    setState(() {
-      search = true;
+
+    // แก้ไขตรงนี้: ปรับวิธีการค้นหาชื่อผู้ใช้
+    DatabaseMethods().Search(value).then((QuerySnapshot docs) {
+      if (docs.docs.isNotEmpty) {
+        setState(() {
+          queryResultSet = [];
+          for (var doc in docs.docs) {
+            Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+            // เพิ่มการตรวจสอบข้อมูล
+            if (data.containsKey('username') && data['username'] != null) {
+              queryResultSet.add(data);
+            }
+          }
+          tempSearchStore = List.from(queryResultSet);
+          _isSearching = false;
+        });
+      } else {
+        setState(() {
+          _isSearching = false;
+        });
+      }
+    }).catchError((error) {
+      print("เกิดข้อผิดพลาดในการค้นหา: $error");
+      setState(() {
+        _isSearching = false;
+      });
     });
-    var capitalizedValue =
-        value.substring(0, 1).toUpperCase() + value.substring(1);
-    if (queryResultSet.isEmpty && value.length == 1) {
-      DatabaseMethods().Search(value).then((QuerySnapshot docs) {
-        for (int i = 0; i < docs.docs.length; ++i) {
-          queryResultSet.add(docs.docs[i].data());
-        }
-      });
-    } else {
-      tempSearchStore = [];
-      queryResultSet.forEach((element) {
-        if (element['username'].startsWith(capitalizedValue)) {
-          setState(() {
-            tempSearchStore.add(element);
-          });
-        }
-      });
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.black,
-        body: Container(
-            child: Column(children: [
-          Padding(
-            padding:
-                const EdgeInsets.only(left: 20, right: 20, top: 50, bottom: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                search
-                    ? Expanded(
-                        child: TextField(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ส่วนหัว
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 5,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  if (!search)
+                    Text(
+                      'การสนทนา',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  if (search)
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
                         onChanged: (value) {
-                          initiateSearch(value.toUpperCase());
+                          initiateSearch(value);
                         },
+                        style: TextStyle(fontSize: 16),
                         decoration: InputDecoration(
-                            border: InputBorder.none,
-                            hintText: 'Search User',
-                            hintStyle: TextStyle(
-                                color: Colors.white,
-                                fontSize: 25,
-                                fontWeight: FontWeight.bold)),
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18.0,
-                            fontWeight: FontWeight.w500),
-                      ))
-                    : Text(
-                        'Chat',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 25,
-                            fontWeight: FontWeight.bold),
+                          hintText: 'ค้นหาผู้ใช้...',
+                          border: InputBorder.none,
+                          hintStyle: TextStyle(color: Colors.grey[400]),
+                        ),
                       ),
-                GestureDetector(
-                  onTap: () {
-                    search = true;
-                    setState(() {});
-                  },
-                  child: Container(
-                      padding: EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: search
-                          ? GestureDetector(
-                              onTap: () {
-                                search = false;
-                                setState(() {});
-                              },
-                              child: Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 25,
-                              ),
-                            )
-                          : Icon(
-                              Icons.search,
-                              color: Colors.white,
-                              size: 25,
-                            )),
-                )
-              ],
+                    ),
+                  Spacer(),
+
+                  // เพิ่มปุ่มสำหรับไปที่หน้า Todayscreen
+                  IconButton(
+                    icon: Icon(
+                      Icons.access_time, // ใช้ icon ที่เกี่ยวกับเวลา
+                      color: Colors.orange,
+                      size: 26,
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => Todayscreen(
+                                  bookingId: '',
+                                )),
+                      );
+                    },
+                    tooltip: 'ไปที่หน้าบันทึกเวลา',
+                  ),
+
+                  IconButton(
+                    icon: Icon(
+                      search ? Icons.close : Icons.search,
+                      color: Colors.grey[700],
+                      size: 26,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        search = !search;
+                        if (!search) {
+                          _searchController.clear();
+                          queryResultSet = [];
+                          tempSearchStore = [];
+                        }
+                      });
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-            width: MediaQuery.of(context).size.width,
-            height: search
-                ? MediaQuery.of(context).size.height / 1.24
-                : MediaQuery.of(context).size.height / 1.24,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20), topRight: Radius.circular(20)),
-            ),
-            child: Column(
-              children: [
-                search
-                    ? ListView(
-                        padding: EdgeInsets.only(left: 10.0, right: 10.0),
-                        primary: false,
-                        shrinkWrap: true,
-                        children: tempSearchStore.map((element) {
-                          return buildResultCard(element);
-                        }).toList())
+
+            // ส่วนค้นหาและแสดงผล
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                ),
+                child: search
+                    ? _isSearching
+                        ? Center(
+                            child: CircularProgressIndicator(
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.orange),
+                            ),
+                          )
+                        : ListView(
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                            children: tempSearchStore.isEmpty
+                                ? [
+                                    Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(top: 50),
+                                        child: Column(
+                                          children: [
+                                            Icon(Icons.search_off,
+                                                size: 64,
+                                                color: Colors.grey[400]),
+                                            SizedBox(height: 16),
+                                            Text(
+                                              'ไม่พบผู้ใช้',
+                                              style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: Colors.grey[600]),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                  ]
+                                : tempSearchStore.map((element) {
+                                    return buildResultCard(element);
+                                  }).toList(),
+                          )
                     : ChatRoomList(),
-              ],
+              ),
             ),
-          ),
-        ])));
+          ],
+        ),
+      ),
+    );
   }
 
   Widget buildResultCard(data) {
     return GestureDetector(
       onTap: () async {
-        search = false;
-        setState(() {});
-        var chatRoomId = getChatRoomIdbyUsername(myUserName!, data['username']);
-        Map<String, dynamic> chatRoomInfoMap = {
-          "users": [myUserName, data['username']]
-        };
-        await DatabaseMethods().createChatRoom(chatRoomId, chatRoomInfoMap);
-        Navigator.push(
+        setState(() {
+          search = false;
+          _searchController.clear();
+        });
+
+        // ตรวจสอบว่าไม่ใช่การแชทกับตัวเอง
+        if (myUserName == data['username']) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('ไม่สามารถสนทนากับตัวเองได้')));
+          return;
+        }
+
+        try {
+          // สร้าง chatRoomId
+          var chatRoomId =
+              getChatRoomIdbyUsername(myUserName!, data['username']);
+
+          // สร้างข้อมูล chatRoom
+          Map<String, dynamic> chatRoomInfoMap = {
+            "users": [myUserName, data['username']],
+            "roles": {myUserName: myRole, data['username']: data['role']},
+            "time": FieldValue.serverTimestamp(),
+            "lastMessage": "",
+            "lastMessageSendTs": "",
+            "sitterId":
+                data['role'] == 'sitter' ? data['username'] : myUserName,
+            "userId": data['role'] == 'user' ? data['username'] : myUserName,
+          };
+
+          // สร้างหรืออัพเดท chatRoom
+          await DatabaseMethods().createChatRoom(chatRoomId, chatRoomInfoMap);
+
+          // นำทางไปยังหน้าแชท
+          Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => ChatPage(
-                      name: data['name'],
-                      profileurl: data['photo'],
-                      username: data['username'],
-                    )));
+              builder: (context) => ChatPage(
+                name: data['name'],
+                profileurl: data['photo'],
+                username: data['username'],
+                role: data['role'],
+              ),
+            ),
+          );
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('เกิดข้อผิดพลาดในการสร้างห้องสนทนา: $e')));
+        }
       },
       child: Container(
-        margin: EdgeInsets.symmetric(vertical: 8),
-        child: Material(
-          elevation: 5,
-          borderRadius: BorderRadius.circular(10),
-          child: Container(
-            padding: EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
+        margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: Offset(0, 2),
             ),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(60),
-                  child: Image.network(
-                    data['photo'],
-                    height: 50,
-                    width: 50,
-                    fit: BoxFit.cover,
+          ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.orange.withOpacity(0.1),
+                  border: Border.all(
+                    color: Colors.orange.withOpacity(0.3),
+                    width: 1,
                   ),
                 ),
-                SizedBox(
-                  width: 15,
-                ),
-                Column(
+                child: data['photo'] != null && data['photo'].isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(30),
+                        child: Image.network(
+                          data['photo'],
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(Icons.person,
+                                color: Colors.orange[300], size: 32);
+                          },
+                        ),
+                      )
+                    : Icon(Icons.person, color: Colors.orange[300], size: 32),
+              ),
+              SizedBox(width: 15),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      data["name"],
+                      data["name"] ?? "ไม่ระบุชื่อ",
                       style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18.0),
+                        color: Colors.black87,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
-                    SizedBox(
-                      width: 10,
+                    SizedBox(height: 5),
+                    Text(
+                      data['username'] ?? "",
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
                     ),
-                    Text(data['username'],
-                        style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500)),
                   ],
                 ),
-              ],
-            ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: data['role'] == 'sitter'
+                      ? Colors.blue.withOpacity(0.1)
+                      : Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  data['role'] == 'sitter' ? 'ผู้รับเลี้ยง' : 'ผู้ใช้งาน',
+                  style: TextStyle(
+                    color: data['role'] == 'sitter'
+                        ? Colors.blue[700]
+                        : Colors.green[700],
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -273,35 +442,88 @@ class _MyWidgetState extends State<Chat> {
 }
 
 class ChatRoomListTile extends StatefulWidget {
-  final String lastMessage, chatRoomId, myUsername, time;
-  ChatRoomListTile(
-      {required this.chatRoomId,
-      required this.lastMessage,
-      required this.myUsername,
-      required this.time});
+  final String chatRoomId;
+  final String myUsername;
+  final String lastMessage;
+  final String timestamp;
+
+  const ChatRoomListTile({
+    Key? key,
+    required this.chatRoomId,
+    required this.myUsername,
+    required this.lastMessage,
+    required this.timestamp,
+  }) : super(key: key);
 
   @override
   State<ChatRoomListTile> createState() => _ChatRoomListState();
 }
 
 class _ChatRoomListState extends State<ChatRoomListTile> {
-  String profilePicUrl = "", name = "", username = "", id = "";
+  String profilePicUrl = "", name = "", username = "", role = "";
+  bool _isLoading = true;
+
   getthisUserInfo() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     username =
         widget.chatRoomId.replaceAll("_", '').replaceAll(widget.myUsername, "");
 
-    QuerySnapshot querySnapshot =
-        await DatabaseMethods().getUserInfo(username.toUpperCase());
-    name = '${querySnapshot.docs[0]['name']}';
-    profilePicUrl = '${querySnapshot.docs[0]['photo']}';
-    id = '${querySnapshot.docs[0]['email']}';
-    setState(() {});
+    try {
+      // แก้ไขตรงนี้: ใช้ toLowerCase() แทน toUpperCase() เพราะข้อมูลอาจเก็บในรูปแบบ lowercase
+      QuerySnapshot querySnapshot =
+          await DatabaseMethods().getUserInfo(username);
+
+      if (querySnapshot.docs.isNotEmpty) {
+        final userData = querySnapshot.docs[0].data() as Map<String, dynamic>;
+        setState(() {
+          name = userData['name'] ?? 'ไม่ระบุชื่อ';
+          profilePicUrl = userData['photo'] ?? '';
+          role = userData['role'] ?? '';
+          _isLoading = false;
+        });
+      } else {
+        // หากไม่พบข้อมูล ให้ลองค้นหาอีกครั้งด้วย uppercase
+        QuerySnapshot uppercaseQuery =
+            await DatabaseMethods().getUserInfo(username.toUpperCase());
+        if (uppercaseQuery.docs.isNotEmpty) {
+          final userData =
+              uppercaseQuery.docs[0].data() as Map<String, dynamic>;
+          setState(() {
+            name = userData['name'] ?? 'ไม่ระบุชื่อ';
+            profilePicUrl = userData['photo'] ?? '';
+            role = userData['role'] ?? '';
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print("Error fetching user data: $e");
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   void initState() {
     getthisUserInfo();
     super.initState();
+  }
+
+  String getTimeDisplay(String timestamp) {
+    if (timestamp.isEmpty) return '';
+
+    // เพิ่มตรรกะการแสดงเวลาเพิ่มเติมถ้าต้องการ
+    // เช่น แปลงเป็น "เมื่อวาน", "วันนี้", "5 นาทีที่แล้ว" เป็นต้น
+
+    return timestamp;
   }
 
   @override
@@ -312,68 +534,153 @@ class _ChatRoomListState extends State<ChatRoomListTile> {
             context,
             MaterialPageRoute(
                 builder: (context) => ChatPage(
-                    name: name,
-                    profileurl: profilePicUrl,
-                    username: username)));
+                      name: name.isEmpty ? 'ไม่ระบุชื่อ' : name,
+                      profileurl: profilePicUrl,
+                      username: username,
+                      role: role,
+                    )));
       },
       child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            profilePicUrl == ''
-                ? CircularProgressIndicator()
-                : ClipRRect(
-                    borderRadius: BorderRadius.circular(60),
-                    child: Image.network(
-                      profilePicUrl,
-                      height: 70,
-                      width: 70,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-            SizedBox(
-              width: 20,
+        margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: Offset(0, 2),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  height: 10,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(12),
+          child: Row(
+            children: [
+              _isLoading
+                  ? Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.orange),
+                          ),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.orange.withOpacity(0.1),
+                        border: Border.all(
+                          color: Colors.orange.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: profilePicUrl.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(30),
+                              child: Image.network(
+                                profilePicUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(Icons.person,
+                                      color: Colors.orange[300], size: 32);
+                                },
+                              ),
+                            )
+                          : Icon(Icons.person,
+                              color: Colors.orange[300], size: 32),
+                    ),
+              SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      username,
-                      style: AppWidget.boldTextFeildStyle(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _isLoading
+                                ? 'กำลังโหลด...'
+                                : (name.isNotEmpty ? name : 'ไม่ระบุชื่อ'),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Colors.black87,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (widget.timestamp.isNotEmpty)
+                          Text(
+                            getTimeDisplay(widget.timestamp),
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
+                      ],
+                    ),
+                    SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            widget.lastMessage.isEmpty
+                                ? 'ยังไม่มีข้อความ'
+                                : widget.lastMessage,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        if (role.isNotEmpty)
+                          Container(
+                            margin: EdgeInsets.only(left: 8),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: role == 'sitter'
+                                  ? Colors.blue.withOpacity(0.1)
+                                  : Colors.green.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              role == 'sitter' ? 'ผู้รับเลี้ยง' : 'ผู้ใช้งาน',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: role == 'sitter'
+                                    ? Colors.blue[700]
+                                    : Colors.green[700],
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
-                Container(
-                  width: MediaQuery.of(context).size.width / 3,
-                  child: Text(
-                    widget.lastMessage,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                        color: Colors.black38,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Poppins'),
-                  ),
-                ),
-              ],
-            ),
-            Spacer(),
-            Text(
-              widget.time,
-              style: TextStyle(
-                  color: Colors.black45,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Poppins'),
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );

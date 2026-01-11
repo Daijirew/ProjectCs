@@ -16,14 +16,14 @@ class _MyWidgetState extends State<BottomNav> {
   int currentTapIndex = 0;
   late List<Widget> pages;
   late Widget currentPage;
-  late home homePage;
+  late Home homePage;
   late Chat chat;
   late Profile profile;
   late Payment payment;
 
   @override
   void initState() {
-    homePage = const home();
+    homePage = const Home();
     chat = const Chat();
     profile = const Profile();
     payment = const Payment();

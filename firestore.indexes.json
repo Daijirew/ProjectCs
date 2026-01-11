@@ -1,0 +1,32 @@
+{
+  
+    "indexes": [
+      {
+        
+        "collectionGroup": "users",
+        "queryScope": "COLLECTION",
+        "fields": [
+          { "fieldPath": "role", "order": "ASCENDING" },
+          { "fieldPath": "status", "order": "ASCENDING" },
+          { "fieldPath": "registrationDate", "order": "DESCENDING" }
+        ]
+      },
+      {
+        "collectionGroup": "bookings",
+        "queryScope": "COLLECTION",
+        "fields": [
+          { "fieldPath": "status", "order": "ASCENDING" },
+          { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
+      },
+      {
+        "collectionGroup": "bookings",
+        "queryScope": "COLLECTION",
+        "fields": [
+          { "fieldPath": "status", "order": "ASCENDING" },
+          { "fieldPath": "createdAt", "order": "ASCENDING" },
+          { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
+      }
+    ]
+  }
